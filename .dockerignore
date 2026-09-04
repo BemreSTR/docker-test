@@ -1,0 +1,6 @@
+# Docker imajına dahil edilmemesi gereken gereksiz dosyalar
+.git
+.gitignore
+Dockerfile
+.dockerignore
+*.md

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps HTTP Tester & API Playground 🐳</title>
+  <link rel="stylesheet" href="style.css?v=2.0">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo">
+        <span class="whale">🐳</span>
+        <div>
+          <h1>⚡️ Canlı Geliştirme Modu (Bind Mount) ⚡️</h1>
+          <p class="subtitle">Tüm HTTP Metotlarını Test Eden & Canlı Gösteren İstemci</p>
+        </div>
+      </div>
+      <div class="env-badge" id="host-badge">
+        <span class="dot">●</span>
+        <span id="runtime-label">Docker Konteynır</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- Hızlı Şablonlar -->
+    <section class="presets-section">
+      <span class="section-label">Hızlı Şablonlar:</span>
+      <div class="preset-buttons">
+        <button class="preset-btn" data-method="GET" data-url="https://jsonplaceholder.typicode.com/posts/1">GET (Veri
+          Çek)</button>
+        <button class="preset-btn" data-method="POST" data-url="https://jsonplaceholder.typicode.com/posts"
+          data-body='{"title": "DevOps Harika", "body": "Docker ile canlıya alma", "userId": 1}'>POST (Kayıt
+          Ekle)</button>
+        <button class="preset-btn" data-method="PUT" data-url="https://jsonplaceholder.typicode.com/posts/1"
+          data-body='{"id": 1, "title": "Güncellenmiş Başlık", "body": "İçerik değişti", "userId": 1}'>PUT (Tam
+          Güncelle)</button>
+        <button class="preset-btn" data-method="PATCH" data-url="https://jsonplaceholder.typicode.com/posts/1"
+          data-body='{"title": "Sadece Başlık Değişti"}'>PATCH (Kısmi Güncelle)</button>
+        <button class="preset-btn" data-method="DELETE" data-url="https://jsonplaceholder.typicode.com/posts/1">DELETE
+          (Sil)</button>
+      </div>
+    </section>
+
+    <!-- İstek Yapılandırıcı -->
+    <section class="card request-card">
+      <div class="url-bar">
+        <select id="http-method" class="method-select">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="PATCH">PATCH</option>
+          <option value="DELETE">DELETE</option>
+          <option value="HEAD">HEAD</option>
+        </select>
+        <input type="text" id="request-url" placeholder="https://api.ornek.com/v1/resource"
+          value="https://jsonplaceholder.typicode.com/posts/1">
+        <button id="send-btn" class="btn send-btn">
+          <span id="btn-text">İstek Gönder</span>
+          <span id="btn-spinner" class="spinner hidden"></span>
+        </button>
+      </div>
+
+      <!-- İstek Gövdesi (Body) - Sadece POST, PUT, PATCH için -->
+      <div id="body-container" class="body-container">
+        <div class="tabs">
+          <span class="tab active">Request Body (JSON)</span>
+        </div>
+        <textarea id="request-body" placeholder='{"key": "value"}' rows="4"></textarea>
+      </div>
+    </section>
+
+    <!-- Yanıt Alanı -->
+    <section class="card response-card">
+      <div class="response-header">
+        <h2>Sunucu Yanıtı</h2>
+        <div class="metrics">
+          <span id="status-badge" class="metric-badge status-init">Durum: Henüz İstek Atılmadı</span>
+          <span id="time-badge" class="metric-badge hidden">Süre: 0ms</span>
+        </div>
+      </div>
+
+      <div class="response-body-wrapper">
+        <pre
+          id="response-output"><code>Herhangi bir HTTP isteği göndermek için yukarıdaki "İstek Gönder" butonuna basın veya hızlı şablonları kullanın.</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Docker Container İçinde Nginx ile Servis Ediliyor • <code>v2.0.0</code></p>
+  </footer>
+
+  <script src="app.js?v=2.0"></script>
+</body>
+
+</html>

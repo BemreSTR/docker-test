@@ -1,0 +1,332 @@
+:root {
+  --bg-color: #0b0f19;
+  --card-bg: rgba(17, 24, 39, 0.85);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --accent: #38bdf8;
+  --accent-hover: #0284c7;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-color);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.app-header {
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  padding: 1.25rem 2rem;
+}
+
+.header-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.whale {
+  font-size: 2.2rem;
+}
+
+.logo h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.env-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.env-badge .dot {
+  color: #10b981;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Main Container */
+.main-container {
+  max-width: 1000px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+/* Presets */
+.presets-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.section-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--accent);
+}
+
+/* Card */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* URL Bar */
+.url-bar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.method-select {
+  background: #1e293b;
+  color: #38bdf8;
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.method-select option {
+  background: #1e293b;
+  color: #fff;
+}
+
+#request-url {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#request-url:focus {
+  border-color: var(--accent);
+}
+
+.btn {
+  background: var(--accent);
+  color: #0b0f19;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+  color: #ffffff;
+}
+
+/* Body Container */
+.body-container {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+#request-body {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: #34d399;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  outline: none;
+  resize: vertical;
+}
+
+/* Response Section */
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.response-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.metrics {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.metric-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+}
+
+.status-init {
+  background: rgba(156, 163, 175, 0.15);
+  color: var(--text-secondary);
+}
+
+.status-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-error {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-time {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+}
+
+.hidden {
+  display: none;
+}
+
+.response-body-wrapper {
+  background: #090d16;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  max-height: 420px;
+  overflow: auto;
+}
+
+#response-output {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.app-footer code {
+  color: var(--accent);
+}
