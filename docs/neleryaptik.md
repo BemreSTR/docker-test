@@ -143,12 +143,43 @@ docker run -d -p 8081:80 -v "$PWD":/usr/share/nginx/html --name web-uygulamam ng
 
 ---
 
+### 8. Aşama: Mimariyi Büyütme (Full-Stack Refactor) & Konteynırlar Arası İletişim
+
+Tek bir statik web sitesinden gerçek bir kurumsal mimariye geçtik:
+* **`frontend/`:** Nginx üzerinde çalışan HTTP Playground uygulaması ve kendi Dockerfile'ı.
+* **`backend/`:** PostgreSQL veritabanına bağlanan Node.js Express REST API ve optimize edilmiş Dockerfile'ı.
+* **`db/` (PostgreSQL 16):** Gerçek ilişkisel veritabanı.
+
+#### 🧠 Bu Aşamada Öğrenilen Kritik DevOps Prensipleri:
+
+1. **Konteynırlar Arası İletişim ve DNS:**
+   * Konteynır içinde `localhost:5000` çağrısı **çalışmaz**, çünkü her konteynırın `localhost`'u yalnızca kendi iç dünyasıdır.
+   * Sabit IP adresi kullanılamaz, çünkü konteynırlar her yeniden başladığında sanal IP'leri değişir.
+   * **Çözüm:** Kullanıcı tanımlı Docker Ağı (**Docker Network**). Konteynırlar aynı ağa konulduğunda Docker'ın dahili DNS'i sayesinde birbirlerine isimleriyle seslenebilirler (Örn: `postgres://db:5432`).
+
+2. **Docker Katman Önbellekleme (Layer Caching) Optimizasyonu:**
+   * Backend Dockerfile'ında tüm kodları tek seferde kopyalamak yerine:
+     ```dockerfile
+     COPY package*.json ./
+     RUN npm install --production
+     COPY . .
+     ```
+   * **Neden?** Kod satırlarında değişiklik yaptığımızda, değişmeyen `npm install` katmanı Docker cache'inden anında gelir. Böylece build süresi dakikalar yerine **0.5 saniyeye** iner!
+
+3. **Database Retry Döngüsü (Bağlantı Dayanıklılığı):**
+   * Konteynır ortamlarında veritabanı motorunun ilk açılışı 3-5 saniye sürebilir. Eğer Backend, DB'den önce ayağa kalkarsa doğrudan çöker (**CrashLoopBackOff**).
+   * Çözüm olarak Backend koduna veritabanı hazır olana kadar pes etmeyip belirli aralıklarla yeniden deneyen bir **Retry Loop** mimarisi entegre ettik.
+
+---
+
 ## 🧠 Sık Kullanılan Kritik Docker Komutları Sözlüğü
 
 | Komut | Açıklama |
 | :--- | :--- |
 | `docker build -t <isim> .` | Bulunulan dizindeki Dockerfile'dan imaj üretir. |
 | `docker run -d -p <host>:<container> --name <ad> <imaj>` | Konteynırı arka planda (-d) port yönlendirerek (-p) çalıştırır. |
+| `docker run -v "$PWD":<hedef> ...` | Bilgisayardaki klasörü konteynıra canlı ayna olarak bağlar (**Bind Mount**). |
+| `docker run -v <kasa_adi>:<hedef> ...` | Kalıcı veri kasası bağlar (**Named Volume**). |
 | `docker ps` | Sadece çalışan aktif konteynırları listeler. |
 | `docker ps -a` | Durmuş olanlar dahil tüm konteynırları listeler. |
 | `docker rm -f <ad>` | Çalışan konteynırı zorla durdurur ve siler. |
@@ -156,8 +187,14 @@ docker run -d -p 8081:80 -v "$PWD":/usr/share/nginx/html --name web-uygulamam ng
 | `docker exec -it <ad> sh` | Çalışan konteynırın içine canlı Linux terminali açar. |
 | `docker volume ls` | Docker'daki kalıcı veri kasalarını listeler. |
 | `docker volume rm <ad>` | Belirtilen named volume'ü siler. |
+| `docker network create <ag_adi>` | Konteynırların isimle konuşabilmesi için izole bir ağ açar. |
+| `docker network ls` | Mevcut Docker ağlarını listeler. |
 
 ---
 
-## 🚀 Sırada Ne Var?
-* **2. Adım: Docker Compose:** Frontend + Backend API + PostgreSQL veritabanını tek bir `docker-compose.yml` dosyası ve tek bir komutla (`docker compose up`) aynı ağda çalıştırma.
+## 🚀 Sıradaki Adım:
+1. `docker network create devops-agi` ile ağı açmak.
+2. PostgreSQL'i named volume ve şifre ile bu ağda başlatmak.
+3. Backend API'yi derleyip aynı ağda başlatmak.
+4. Frontend'i başlatıp veritabanına tarayıcıdan veri yazıp silmek!
+

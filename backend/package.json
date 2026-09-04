@@ -1,0 +1,14 @@
+{
+  "name": "devops-backend-api",
+  "version": "1.0.0",
+  "description": "DevOps pratikleri için PostgreSQL bağlantılı hafif Node.js API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}

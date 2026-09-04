@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevOps HTTP Tester & API Playground 🐳</title>
-  <link rel="stylesheet" href="style.css?v=2.0">
+  <title>DevOps Full-Stack API Playground 🐳</title>
+  <link rel="stylesheet" href="style.css?v=3.0">
 </head>
-
 <body>
   <header class="app-header">
     <div class="header-content">
       <div class="logo">
         <span class="whale">🐳</span>
         <div>
-          <h1>⚡️ Canlı Geliştirme Modu (Bind Mount) ⚡️</h1>
-          <p class="subtitle">Tüm HTTP Metotlarını Test Eden & Canlı Gösteren İstemci</p>
+          <h1>DevOps Full-Stack Playground</h1>
+          <p class="subtitle">Frontend (Nginx) ➔ Backend (Node.js) ➔ Database (PostgreSQL)</p>
         </div>
       </div>
       <div class="env-badge" id="host-badge">
@@ -30,18 +28,10 @@
     <section class="presets-section">
       <span class="section-label">Hızlı Şablonlar:</span>
       <div class="preset-buttons">
-        <button class="preset-btn" data-method="GET" data-url="https://jsonplaceholder.typicode.com/posts/1">GET (Veri
-          Çek)</button>
-        <button class="preset-btn" data-method="POST" data-url="https://jsonplaceholder.typicode.com/posts"
-          data-body='{"title": "DevOps Harika", "body": "Docker ile canlıya alma", "userId": 1}'>POST (Kayıt
-          Ekle)</button>
-        <button class="preset-btn" data-method="PUT" data-url="https://jsonplaceholder.typicode.com/posts/1"
-          data-body='{"id": 1, "title": "Güncellenmiş Başlık", "body": "İçerik değişti", "userId": 1}'>PUT (Tam
-          Güncelle)</button>
-        <button class="preset-btn" data-method="PATCH" data-url="https://jsonplaceholder.typicode.com/posts/1"
-          data-body='{"title": "Sadece Başlık Değişti"}'>PATCH (Kısmi Güncelle)</button>
-        <button class="preset-btn" data-method="DELETE" data-url="https://jsonplaceholder.typicode.com/posts/1">DELETE
-          (Sil)</button>
+        <button class="preset-btn" data-method="GET" data-url="http://localhost:5000/api/health">🏥 Sağlık Durumu (Health)</button>
+        <button class="preset-btn" data-method="GET" data-url="http://localhost:5000/api/notes">📋 Notları Listele (PostgreSQL)</button>
+        <button class="preset-btn" data-method="POST" data-url="http://localhost:5000/api/notes" data-body='{"title": "İlk Notum", "content": "PostgreSQL veritabanına başarıyla kaydedildi!"}'>➕ Not Ekle (PostgreSQL)</button>
+        <button class="preset-btn" data-method="DELETE" data-url="http://localhost:5000/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
       </div>
     </section>
 
@@ -56,15 +46,14 @@
           <option value="DELETE">DELETE</option>
           <option value="HEAD">HEAD</option>
         </select>
-        <input type="text" id="request-url" placeholder="https://api.ornek.com/v1/resource"
-          value="https://jsonplaceholder.typicode.com/posts/1">
+        <input type="text" id="request-url" placeholder="http://localhost:5000/api/notes" value="http://localhost:5000/api/health">
         <button id="send-btn" class="btn send-btn">
           <span id="btn-text">İstek Gönder</span>
           <span id="btn-spinner" class="spinner hidden"></span>
         </button>
       </div>
 
-      <!-- İstek Gövdesi (Body) - Sadece POST, PUT, PATCH için -->
+      <!-- İstek Gövdesi (Body) -->
       <div id="body-container" class="body-container">
         <div class="tabs">
           <span class="tab active">Request Body (JSON)</span>
@@ -76,7 +65,7 @@
     <!-- Yanıt Alanı -->
     <section class="card response-card">
       <div class="response-header">
-        <h2>Sunucu Yanıtı</h2>
+        <h2>Sunucu & Veritabanı Yanıtı</h2>
         <div class="metrics">
           <span id="status-badge" class="metric-badge status-init">Durum: Henüz İstek Atılmadı</span>
           <span id="time-badge" class="metric-badge hidden">Süre: 0ms</span>
@@ -84,17 +73,15 @@
       </div>
 
       <div class="response-body-wrapper">
-        <pre
-          id="response-output"><code>Herhangi bir HTTP isteği göndermek için yukarıdaki "İstek Gönder" butonuna basın veya hızlı şablonları kullanın.</code></pre>
+        <pre id="response-output"><code>Yukarıdaki "Sağlık Durumu" veya "Notları Listele" butonuna basarak Backend API ve PostgreSQL veritabanını test edebilirsiniz.</code></pre>
       </div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <p>Docker Container İçinde Nginx ile Servis Ediliyor • <code>v2.0.0</code></p>
+    <p>Docker Mimarisi: Nginx Frontend ➔ Node.js API ➔ PostgreSQL 16</p>
   </footer>
 
-  <script src="app.js?v=2.0"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
-
 </html>
