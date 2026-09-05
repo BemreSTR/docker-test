@@ -28,10 +28,10 @@
     <section class="presets-section">
       <span class="section-label">Hızlı Şablonlar:</span>
       <div class="preset-buttons">
-        <button class="preset-btn" data-method="GET" data-url="http://localhost:5000/api/health">🏥 Sağlık Durumu (Health)</button>
-        <button class="preset-btn" data-method="GET" data-url="http://localhost:5000/api/notes">📋 Notları Listele (PostgreSQL)</button>
-        <button class="preset-btn" data-method="POST" data-url="http://localhost:5000/api/notes" data-body='{"title": "İlk Notum", "content": "PostgreSQL veritabanına başarıyla kaydedildi!"}'>➕ Not Ekle (PostgreSQL)</button>
-        <button class="preset-btn" data-method="DELETE" data-url="http://localhost:5000/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
+        <button class="preset-btn" data-method="GET" data-url="http://localhost:5001/api/health">🏥 Sağlık Durumu (Health)</button>
+        <button class="preset-btn" data-method="GET" data-url="http://localhost:5001/api/notes">📋 Notları Listele (PostgreSQL)</button>
+        <button class="preset-btn" data-method="POST" data-url="http://localhost:5001/api/notes" data-body='{"title": "İlk Notum", "content": "PostgreSQL veritabanına başarıyla kaydedildi!"}'>➕ Not Ekle (PostgreSQL)</button>
+        <button class="preset-btn" data-method="DELETE" data-url="http://localhost:5001/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
       </div>
     </section>
 
@@ -46,7 +46,7 @@
           <option value="DELETE">DELETE</option>
           <option value="HEAD">HEAD</option>
         </select>
-        <input type="text" id="request-url" placeholder="http://localhost:5000/api/notes" value="http://localhost:5000/api/health">
+        <input type="text" id="request-url" placeholder="http://localhost:5001/api/notes" value="http://localhost:5001/api/health">
         <button id="send-btn" class="btn send-btn">
           <span id="btn-text">İstek Gönder</span>
           <span id="btn-spinner" class="spinner hidden"></span>
