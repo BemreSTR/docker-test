@@ -241,7 +241,7 @@ Docker Compose, tüm bu mutfağın **"Restoran Müdürü / Orkestra Şefidir"**.
 
 ### 10. Aşama: İlk `docker-compose.yml` Dosyamız ve Satır Satır Anatomisi 🎻
 
-Az önce terminalde tek tek yazdığımız 5 uzun komutu tek bir dosyada topladık:
+Manuel olarak yazdığımız tüm o dağınık komutları tek bir orkestra şefi dosyasında topladık:
 
 ```yaml
 services:
@@ -256,8 +256,10 @@ services:
       POSTGRES_DB: devops_db
     volumes:
       - pg_verisi:/var/lib/postgresql/data
+    # Senior İpucu: Port yönlendirmesi (ports) bilerek yok! 
+    # Güvenlik gereği veritabanı sadece iç ağdaki backend'e açıktır.
 
-  # 2. Şef Aşçı (Node.js API)
+  # 2. Şef Aşçı (Node.js REST API)
   backend:
     build: ./backend
     container_name: backend-api
@@ -265,13 +267,13 @@ services:
     ports:
       - "5001:5000"
     environment:
-      DB_HOST: db  # Compose sayesinde 'db' adıyla konuşur!
+      DB_HOST: db  # Compose sayesinde 'db' servis adıyla konuşur!
       DB_USER: postgres
       DB_PASSWORD: supersecret
       DB_NAME: devops_db
       PORT: 5000
     depends_on:
-      - db  # Önce veritabanını başlat, sonra backend'i aç!
+      - db  # Akıllı Sıralama: Önce veritabanı açılsın, sonra backend!
 
   # 3. Garson (Nginx Frontend)
   frontend:
@@ -284,15 +286,88 @@ services:
       - backend
 
 volumes:
-  pg_verisi:
+  pg_verisi:  # Kalıcı veri kasası tanımı
 ```
 
 #### 🔍 Satır Satır Neler Oluyor?
-1. **`services:`** Ayağa kalkacak konteynırların listesidir (`db`, `backend`, `frontend`).
-2. **`build: ./backend`:** "Git o klasördeki Dockerfile'ı oku ve imajı kendin otomatik build et!" demektir.
-3. **`depends_on:`** Akıllı bağımlılık zinciridir. Compose'a der ki: *"Sakın backend'i veritabanından önce açma! Önce `db` açılsın, sonra `backend` açılsın."*
-4. **`restart: unless-stopped`:** Eğer sunucu yeniden başlarsa veya konteynır beklenmedik şekilde çökerse, Docker onu otomatik olarak yeniden ayağa kaldırır (DevOps dayanıklılığı).
-5. **Otomatik Ağ (Default Network):** Fark ettiysen dosyada `network` satırı yazmadık! Çünkü Docker Compose bu 3 servis için arkada otomatik olarak tek bir ortak ağ açar ve hepsini o ağa bağlar.
+1. **`services:`** Ayağa kalkacak mikroservislerin listesidir (`db`, `backend`, `frontend`).
+2. **`build: ./backend`:** Dockerfile'ı oku ve imajı kendin derle demektir.
+3. **`depends_on:`** Akıllı bağımlılık zinciridir. Backend'in veritabanı açılmadan önce başlatılmasını engeller.
+4. **`restart: unless-stopped`:** Konteynır çökerse veya sunucu yeniden başlarsa Docker onu otomatik olarak ayağa kaldırır.
+5. **Otomatik Ağ:** Compose arkada varsayılan izole bir ağ kurar ve servis adlarını (`db`, `backend`) birbirine tanıtır.
+
+---
+
+## 🎓 BÖLÜM 3: Kıdemli DevOps Soru-Cevap & Mimari Sırlar
+
+*(Öğrenme sürecinde sorduğun ve sistemin arkasındaki mantığı aydınlatan kritik soruların detaylı yanıtları)*
+
+---
+
+### ❓ Soru 1: Neden Frontend ve Backend için Dockerfile yazdık da PostgreSQL için yazmadık?
+* **Cevap:**
+  * **Frontend ve Backend:** Bu kodları (HTML/JS, `server.js`) **sen yazdın**. Dünyada başka kimsede bu kodlar yok. Bu nedenle Docker Hub'da hazır bir imajı bulunamaz. Mecburen `Dockerfile` yazıp kendi imajımızı ürettik (`docker build`).
+  * **PostgreSQL:** Dünyaca ünlü, standart, açık kaynak bir veritabanıdır. PostgreSQL mühendisleri zaten onun Dockerfile'ını yazmış, build etmiş ve Docker Hub'a resmi imaj olarak yüklemişlerdir (`postgres:16-alpine`). Biz sadece hazır olanı indirip çalıştırdık.
+* **💡 Senior Analojisi:** 
+  Özel tasarım bir yemek masası yaptırmak marangoza özel çizim vermektir (**Dockerfile build**). 
+  Ama mutfağa buzdolabı alırken sıfırdan buzdolabı icat etmezsin; gider Bosch/Arçelik bayisinden hazır alır fişe takarsın (**`image: postgres`**).
+* **💡 Senior DevOps Notu:** Peki PostgreSQL için ne zaman Dockerfile yazılır? Sadece içine özel C eklentileri (örneğin Yapay Zeka vektörleri için `pgvector` veya harita verileri için `postgis`) derlemek istediğimizde kendi özel Postgres Dockerfile'ımızı yazarız.
+
+---
+
+### ❓ Soru 2: Ben SQL tablosu oluşturmadıysam satırlar ve sütunlar nasıl oluştu?
+* **Cevap:** Arka planda çalışan iki mekanizma vardı:
+  1. **Veritabanının Açılması (`devops_db`):** 
+     Konteynıra verdiğimiz `-e POSTGRES_DB=devops_db` ortam değişkeni sayesinde PostgreSQL ilk açılışında bu isimde boş bir veritabanı yarattı.
+  2. **Tablo ve Sütunların Açılması (`notes`):** 
+     Backend kodumuz olan `server.js` dosyasının içine şu SQL kodunu gömmüştük:
+     ```sql
+     CREATE TABLE IF NOT EXISTS notes (
+       id SERIAL PRIMARY KEY,
+       title VARCHAR(255) NOT NULL,
+       content TEXT,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+     );
+     ```
+     Backend ayağa kalktığı saniye veritabanına bağlandı ve bu sorguyu çalıştırarak tabloyu, satır ve sütun kurallarını otomatik inşa etti!
+* **💡 Senior DevOps Notu:** Gerçek kurumsal projelerde tablolar koda doğrudan yazılmaz; **Database Migration Araçları** (Prisma, Flyway, Knex, Liquibase) kullanılır. Böylece veritabanı şeması versiyonlanır ve CI/CD sürecinde otomatik güncellenir.
+
+---
+
+### ❓ Soru 3: Veritabanı cihazımda mı çalışıyor yoksa ayrı konteynırda mı? İçine girip bakabilir miyim?
+* **Cevap:** Kesinlikle Mac bilgisayarında **değil**, izole bir konteynırın içinde çalışıyor! Mac'ine tek bir veritabanı kütüphanesi kurulmadı.
+* **Canlı Kanıtı:** Terminalden şu komutla veritabanı konteynırının içine girdik:
+  ```bash
+  docker exec -it veritabani psql -U postgres -d devops_db
+  ```
+  İçeride `\dt` diyerek `notes` tablosunu gördük. `SELECT * FROM notes;` sorgusuyla web sayfamızdan eklediğimiz notları (`İlk Notum`, `ikinci Notum`, `üçüncü Notum - eyvallah`) canlı canlı listeledik ve sildik!
+
+---
+
+### ❓ Soru 4: `docker compose down` ile sistemi durdursam veriler silinir mi?
+* **Cevap: HAYIR, KESİNLİKLE SİLİNMEZ!**
+* **Neden?** Çünkü `docker-compose.yml` içinde veritabanına bir **Named Volume (`pg_verisi`)** bağladık.
+* Konteynır sadece bir "motordur"; veriler ise Mac'inin diskindeki güvenli `pg_verisi` kasasında durur. Konteynır silinse de kasa silinmez.
+* Sistemi tekrar `docker compose up -d` ile açtığında verilerin aynen geri gelir.
+* **Veriler Ne Zaman Silinir?** Yalnızca sen özellikle `docker compose down -v` (`-v` = volume'leri de sil) dersen silinir.
+
+---
+
+### ❓ Soru 5: `down` ettikten sonra Docker'daki imaj isimlerini değiştirsem bir sıkıntı olur mu?
+* **Cevap: HİÇBİR SIKINTI OLMAZ! Veriler sapasağlam kalır.**
+* **Neden?** İmaj ismi sadece çalışan yazılımın adıdır. `pg_verisi` ise bilgisayardaki harici hard disktir.
+* **Analoji:** Bilgisayarına format atıp Windows 10 yerine Windows 11 kursan bile, harici hard diskini (USB) tekrar taktığında içindeki fotoğrafların silinmez. Yeni imaj da aynı kasaya (`pg_verisi`) bağlandığı sürece verileri okur.
+
+---
+
+### ❓ Soru 6: `pg_verisi:/var/lib/postgresql/data` adresini değiştirirsem ne olur?
+Bu adres iki parçadan oluşur: `[SOL TARAF (Kasa Adı)] : [SAĞ TARAF (Konteynır İçi Yol)]`
+
+* **Durum A (Sol tarafı değiştirirsen - örn: `yeni_kasa:...`):**
+  Docker diskte `yeni_kasa` adında sıfır ve boş bir kasa açar. Konteynır boş bir veritabanıyla başlar. 
+  **Eski verilerin silindi mi? HAYIR!** Eski verilerin `pg_verisi` kasasında aynen durur (USB belleği çıkarıp başka boş USB takmak gibi). Dosyayı tekrar `pg_verisi` yaparsan eski veriler anında geri gelir.
+* **Durum B (Sağ tarafı değiştirirsen - örn: `pg_verisi:/baska_yer`):**
+  PostgreSQL motoru standart olarak verilerini `/var/lib/postgresql/data` yolunda arar. Sen kasayı başka klasöre bağlarsan PostgreSQL kendi klasörünü boş bulur ve hata verir. Sağ taraf sabit kalmalıdır.
 
 ---
 
@@ -302,8 +377,10 @@ volumes:
 | :--- | :--- |
 | `docker compose up -d` | Bütün servisleri derler (build), ağları kurar ve arka planda (-d) sırayla ayağa kaldırır. |
 | `docker compose down` | Tüm sistemi (konteynırlar, ağlar) tek komutla kapatır ve temizler. |
+| `docker compose down -v` | **DİKKAT:** Konteynırlarla birlikte kalıcı veri kasalarını (Volume) da siler. |
 | `docker compose ps` | Compose ile yönetilen servislerin canlı durumunu gösterir. |
-| `docker compose logs -f` | Tüm servislerin (frontend, backend, db) loglarını tek bir ekranda renkli olarak canlı izletir. |
+| `docker compose logs -f` | Tüm servislerin (frontend, backend, db) loglarını tek ekranda renkli canlı izletir. |
+| `docker exec -it <ad> psql -U <user> -d <db>` | PostgreSQL konteynırının içine SQL terminali açar. |
 | `docker build -t <isim> <dizin>` | Belirtilen dizindeki Dockerfile'dan imaj üretir. |
 | `docker run -d -p <host>:<container> --name <ad> <imaj>` | Tek bir konteynırı manuel çalıştırır. |
 | `docker run -v "$PWD":<hedef> ...` | Klasörü canlı ayna olarak bağlar (**Bind Mount**). |
@@ -315,9 +392,11 @@ volumes:
 
 ---
 
-## 🚀 Şimdi Ne Yapacağız?
-1. Eski manuel başlattığımız konteynırları temizleyeceğiz: `docker rm -f web-uygulamam backend-api veritabani`
-2. Ve tek bir sihirli komut çalıştıracağız: `docker compose up -d`!
+## 🚀 Sırada Ne Var?
+1. `docker compose down` ve `docker compose up -d` ile tek komutla tüm sistemi kapatıp açmayı deneyimlemek.
+2. Kalıcı verilerin korunduğunu doğrulamak.
+3. Sırada: **İmajlarımızı Docker Hub'a yüklemek ve prod sunucularına dağıtmak!**
+
 
 
 
