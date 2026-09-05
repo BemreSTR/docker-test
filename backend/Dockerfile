@@ -12,11 +12,14 @@ COPY package*.json ./
 # 4. Aşama: Bağımlılıkları Kur
 RUN npm install --production
 
-# 5. Aşama: Kalan tüm backend kodlarını kopyala
-COPY . .
+# 5. Aşama: Kalan tüm backend kodlarını kopyala ve sahipliğini 'node' kullanıcısına ver
+COPY --chown=node:node . .
 
-# 6. Aşama: Port Bildirimi
+# 6. Aşama: Güvenlik - Konteynırı ROOT olmayan 'node' kullanıcısıyla çalıştır (En Düşük Yetki Prensibi)
+USER node
+
+# 7. Aşama: Port Bildirimi
 EXPOSE 5000
 
-# 7. Aşama: Başlatma Komutu
+# 8. Aşama: Başlatma Komutu
 CMD ["node", "server.js"]

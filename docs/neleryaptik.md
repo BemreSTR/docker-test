@@ -371,11 +371,71 @@ Bu adres iki parçadan oluşur: `[SOL TARAF (Kasa Adı)] : [SAĞ TARAF (Konteyn�
 
 ---
 
+### ❓ Soru 7: Konteynırlar neden varsayılan olarak `root` çalışır ve `USER node` eklemek neyi değiştirir?
+* **Cevap:**
+  * Dockerfile içinde bir kullanıcı belirtmezsen, Docker içindeki tüm süreçleri **`root` (en yetkili sistem yöneticisi)** olarak çalıştırır.
+  * **Tehlike (Konteynır Kaçışı - Container Escape):** Eğer backend API kodunda uzaktan kod çalıştırma (RCE) gibi bir açık varsa, hacker konteynırın içine `root` olarak sızar! Konteynır içindeki sistem dosyalarını değiştirebilir, paketler yükleyebilir ve bazı durumlarda ana makineye (host) sızma kapısı arayabilir.
+  * **Çözüm (`En Düşük Yetki Prensibi - Least Privilege`):**
+    `node:alpine` imajının içinde zaten sıradan, yetkisiz bir `node` kullanıcısı tanımlıdır.
+    ```dockerfile
+    COPY --chown=node:node . .
+    USER node
+    ```
+    Bu iki satır sayesinde uygulama sıradan bir kullanıcıya devredilir. Saldırgan sızsa bile sistem dosyalarını değiştiremez, sadece o klasörde hapsolur.
+
+---
+
+### ❓ Soru 8: `.env`, `.env.example` ve `.gitignore` üçlüsü neden DevOps'un altın kuralıdır?
+* **Cevap:**
+  * **`.env`:** Gerçek şifrelerin bulunduğu yerdir. Sadece yerel bilgisayarında veya canlı prod sunucusunda gizlice yaşar.
+  * **`.gitignore`:** `.env` dosyasını Git deposunun dışına iter. Böylece `git push` yaptığında şifrelerin GitHub'a kazara sızması imkansız hale gelir.
+  * **`.env.example`:** GitHub'a giden şablondur. Yeni bir yazılımcı projeyi klonladığında: *"Hangi değişkenlere ihtiyacım var?"* sorusunun cevabını bu şablondan bakar, dosyayı kopyalayıp `.env` yapar ve kendi şifresini yazar.
+* **💡 Senior DevOps Kuralı:** Şifreleri koda gömmek yerine ortam değişkeni (`environment variable`) olarak dışarıdan beslemek, **12-Factor App** metodolojisinin 3. kuralıdır (Config kuralı). Kod her ortamda (Dev, Test, Prod) aynı kalır, sadece `.env` değişir!
+
+---
+
+### 11. Aşama: Production Güvenlik Sertleştirmesi (Security Hardening) 🛡️
+
+Gerçek bir prod ortamında çalışan sistemlerin en büyük zafiyeti sızıntılar ve yetkisiz erişimlerdir. Bu aşamada projemize kurumsal güvenlik katmanları ekledik:
+
+#### 1. Kod ile Şifreleri Ayırmak (12-Factor App Prensibi)
+* **Tehlike:** Şifreleri `docker-compose.yml` içine açık metin olarak yazmak (`POSTGRES_PASSWORD: supersecret`). Bu dosya Git'e gönderildiği an şirketin veritabanı şifreleri internete sızar.
+* **Uyguladığımız Çözüm (Üçlü Güvenlik Kalkanı):**
+  1. **`.env` Dosyası:** Gerçek şifreler, kullanıcı adları ve portlar sadece bu dosyada tutulur.
+  2. **`.gitignore` Dosyası:** Git'e `.env` dosyasını takip etmemesini ve asla repoya göndermemesini tembihledik.
+  3. **`.env.example` Dosyası:** GitHub'a giden, içinde gerçek şifre barındırmayan ama hangi değişkenlerin doldurulması gerektiğini gösteren örnek şablon.
+* **`docker-compose.yml` Parametrik Hale Geldi:**
+  ```yaml
+  POSTGRES_USER: ${DB_USER}
+  POSTGRES_PASSWORD: ${DB_PASSWORD}
+  POSTGRES_DB: ${DB_NAME}
+  ports:
+    - "${BACKEND_PORT:-5001}:5000"
+  ```
+  *(Artık YAML dosyamızda tek bir gizli şifre dahi kalmadı!)*
+
+#### 2. Konteynır İçi Non-Root Kullanıcı (En Düşük Yetki Prensibi - Least Privilege)
+* **Tehlike:** Docker konteynırları varsayılan olarak `root` (en üst yetkili) kullanıcısıyla çalışır. Eğer backend kodunda bir güvenlik açığı bulunursa, saldırgan konteynır içinde `root` yetkisi elde eder!
+* **Uyguladığımız Çözüm (`backend/Dockerfile`):**
+  ```dockerfile
+  COPY --chown=node:node . .
+  USER node
+  ```
+  Backend sürecimizi Node.js imajının içindeki yetkisiz sıradan `node` kullanıcısına devrettik. Saldırgan sızsa bile sistem dosyalarına dokunamaz, işletim sistemine zarar veremez.
+
+#### 3. Compose Proje Ön Eki Tuzağı ve Çözümü:
+* **Öğrenilen İpucu:** Docker Compose varsayılan olarak her volume ve ağın başına bulunduğu klasör adını ön ek yapar (`docker-test_pg_verisi`).
+* Daha önce elle açtığımız `pg_verisi` kasasındaki eski verilerimizin (`selam - PostgreSQL kaydedildi`) kaybolmaması için Compose dosyasında açıkça `name: pg_verisi` eşleştirmesi yaptık. Eski veriler anında geri bağlandı!
+
+---
+
 ## 🧠 Sık Kullanılan Kritik Docker & Compose Komutları Sözlüğü
 
 | Komut | Açıklama |
 | :--- | :--- |
+| `docker compose config` | `.env` değişkenlerinin YAML içine nasıl yerleştiğini kontrol eder / doğrular. |
 | `docker compose up -d` | Bütün servisleri derler (build), ağları kurar ve arka planda (-d) sırayla ayağa kaldırır. |
+| `docker compose up -d --build` | Kodlarda değişiklik varsa imajları yeniden derleyip ayağa kaldırır. |
 | `docker compose down` | Tüm sistemi (konteynırlar, ağlar) tek komutla kapatır ve temizler. |
 | `docker compose down -v` | **DİKKAT:** Konteynırlarla birlikte kalıcı veri kasalarını (Volume) da siler. |
 | `docker compose ps` | Compose ile yönetilen servislerin canlı durumunu gösterir. |
@@ -393,9 +453,9 @@ Bu adres iki parçadan oluşur: `[SOL TARAF (Kasa Adı)] : [SAĞ TARAF (Konteyn�
 ---
 
 ## 🚀 Sırada Ne Var?
-1. `docker compose down` ve `docker compose up -d` ile tek komutla tüm sistemi kapatıp açmayı deneyimlemek.
-2. Kalıcı verilerin korunduğunu doğrulamak.
-3. Sırada: **İmajlarımızı Docker Hub'a yüklemek ve prod sunucularına dağıtmak!**
+1. Yerel ortam ve güvenlik sertleştirmesi %100 tamamlandı.
+2. Sırada: **İmajlarımızı Docker Hub'a (Cloud Registry) yüklemek ve canlı sunucuya dağıtıma hazırlamak!**
+
 
 
 

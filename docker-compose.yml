@@ -1,47 +1,44 @@
-# Docker Compose: Tüm Servislerin Orkestra Şefi Reçetesi
+# Docker Compose: Güvenli ve Parametrik Orkestrasyon
 services:
-  # 1. Servis: Kilitli Depomuz (PostgreSQL Veritabanı)
+  # 1. Servis: PostgreSQL Veritabanı
   db:
     image: postgres:16-alpine
     container_name: veritabani
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: supersecret
-      POSTGRES_DB: devops_db
+      # Şifreler artık doğrudan kodda değil; .env dosyasından çekiliyor!
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
-      # Named Volume: Veriler konteynır silinse de bu kasada kalır
       - pg_verisi:/var/lib/postgresql/data
-    # Senior Notu: Port yönlendirmesi (ports) bilerek yapmadık!
-    # Veritabanı sadece arkadaki backend ile konuşmalı, dış dünyaya kapalı olmalıdır.
 
-  # 2. Servis: Şef Aşçımız (Node.js REST API)
+  # 2. Servis: Node.js REST API
   backend:
     build: ./backend
     container_name: backend-api
     restart: unless-stopped
     ports:
-      # Mac AirPlay 5000 portunu tuttuğu için dış kapıyı 5001 yaptık
-      - "5001:5000"
+      - "${BACKEND_PORT:-5001}:5000"
     environment:
-      DB_HOST: db  # Yukarıdaki 'db' servisinin adıyla DNS üzerinden konuşur!
-      DB_USER: postgres
-      DB_PASSWORD: supersecret
-      DB_NAME: devops_db
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
       PORT: 5000
     depends_on:
-      - db  # Önce veritabanını başlat, sonra backend'i aç!
+      - db
 
-  # 3. Servis: Garsonumuz (Nginx Frontend - HTTP Playground)
+  # 3. Servis: Nginx Frontend
   frontend:
     build: ./frontend
     container_name: web-uygulamam
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "${FRONTEND_PORT:-8081}:80"
     depends_on:
       - backend
 
-# Kalıcı Veri Kasalarının Tanımı
 volumes:
   pg_verisi:
+    name: pg_verisi  # Manuel oluşturduğumuz mevcut kasayı doğrudan eşleştir!
