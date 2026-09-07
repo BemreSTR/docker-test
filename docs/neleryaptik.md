@@ -603,7 +603,52 @@ Sitemiz yayına girdikten sonra önemli bir mimari problemle karşılaştık ve 
 
 ---
 
-## 🎓 BÖLÜM 4: Canlı Sunucu (VPS) ve Ağ Mimarisi Soru-Cevapları
+---
+
+### 17. Aşama: DevOps'un Kutsal Kasesi: Full Continuous Deployment (CD) 🚀🤖
+
+Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'a atılıyordu, ancak sunucuya girip elle `pull` ve `up -d` dememiz gerekiyordu (**Continuous Delivery**). Bu aşamada insan müdahalesini **tamamen sıfıra indirerek** gerçek **Continuous Deployment (Sürekli Dağıtım)** sistemini kurduk:
+
+#### 1. Sıfır Müdahale (Zero-Touch) SSH Mimarisi:
+* GitHub Secrets kasasına 3 kritik güvenlik anahtarı tanımladık:
+  * `VPS_HOST`: Canlı sunucumuzun IP adresi (`193.111.78.227`).
+  * `VPS_USERNAME`: Sunucu kullanıcı adı (`root`).
+  * `VPS_PASSWORD`: Sunucu erişim parolası.
+* `.github/workflows/deploy.yml` dosyasına 6. adım olarak SSH tetikleyicisi eklendi:
+  ```yaml
+  # 6. Aşama: VPS Sunucusuna Bağlan ve Canlıyı Güncelle (Full CD)
+  - name: Deploy to VPS via SSH
+    uses: appleboy/ssh-action@v1.0.3
+    with:
+      host: ${{ secrets.VPS_HOST }}
+      username: ${{ secrets.VPS_USERNAME }}
+      password: ${{ secrets.VPS_PASSWORD }}
+      script: |
+        cd /opt/docker-test
+        git pull origin main
+        docker-compose -f docker-compose.prod.yml pull
+        docker-compose -f docker-compose.prod.yml up -d
+  ```
+
+#### 2. Karşılaşılan Prod Krizleri ve Kıdemli Çözümleri:
+1. **Kriz 1: `KeyError: 'ContainerConfig'` (Eski Python Compose Hatası)**
+   * **Neden:** VPS'teki Ubuntu `apt install docker-compose` ile kurulan 2021 model Python tabanlı Docker Compose v1.29.2 sürümünü kullanıyordu. GitHub Actions BuildKit (2024+) imajlarında eski `ContainerConfig` etiketi bulunmadığı için compose çöktü.
+   * **Çözüm:** VPS'e modern Go tabanlı **Docker Compose v2** (`v2.x+`) kuruldu:
+     ```bash
+     curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+     chmod +x /usr/local/bin/docker-compose
+     cp /usr/local/bin/docker-compose /usr/bin/docker-compose
+     ```
+2. **Kriz 2: `Conflict: container name is already in use` (Yetim Konteynır Çakışması)**
+   * **Neden:** Compose v1 çökerken eski konteynırı geçici bir isimle (`222a773441cc_backend-api-prod`) yeniden adlandırmış ve silemeden çöktüğü için konteynır hafızada asılı kalmıştı.
+   * **Çözüm:** Asılı kalan yetim konteynır zorla silindi:
+     ```bash
+     docker rm -f 222a773441cc_backend-api-prod backend-api-prod
+     ```
+
+---
+
+## 🎓 BÖLÜM 4: Canlı Sunucu (VPS), CD ve Ağ Mimarisi Soru-Cevapları
 
 ### ❓ Soru 16: VPS sunucusundaki `.env` dosyasına şifre olarak ne yazmalıyım? İstediğim şifreyi girebilir miyim?
 * **Cevap: EVET, kesinlikle istediğin güçlü şifreyi girebilirsin!**
@@ -637,12 +682,31 @@ Sitemiz yayına girdikten sonra önemli bir mimari problemle karşılaştık ve 
   1. **Kod Geliştirme (Lokal):** `frontend/app.js`, `index.html` ve `style.css` dosyalarında `v1.1.0` özelliklerini geliştirdik.
   2. **Push:** `git commit` ve `git push origin main` yaptık.
   3. **GitHub Actions (Bulut Fabrikası):** GitHub saniyeler içinde yeni imajları derleyip Docker Hub'a `bemres/devops-frontend:latest` ve `1.1.0` olarak yükledi.
-  4. **Canlı Sunucu Güncellemesi (VPS):**
-     ```bash
-     docker-compose -f docker-compose.prod.yml pull
-     docker-compose -f docker-compose.prod.yml up -d
-     ```
+  4. **Canlı Sunucu Güncellemesi (VPS):** GitHub Actions SSH ile sunucuya sızıp `pull` ve `up -d` komutlarını çalıştırdı.
   5. **Sonuç:** Tarayıcıda sayfayı yenilediğimizde `v1.1.0` sürümü ve çalışan istekler anında karşımıza çıktı! Tek bir dosya kopyalamadan canlı sistem güncellendi.
+
+---
+
+### ❓ Soru 20: Continuous Delivery ile Continuous Deployment arasındaki fark nedir?
+* **Cevap:**
+  * **Continuous Delivery (Sürekli Teslimat):** Kod otomatik derlenir, test edilir ve Docker Hub gibi bir depoya koyulur. Ancak canlıya almak için bir buton tıklaması veya sunucuda manuel komut (`pull`) gerekir. İnsan onayı devrededir.
+  * **Continuous Deployment (Sürekli Dağıtım):** İnsan müdahalesi %0'dır. Kod `main` dalına push edildiği an derlenir, test edilir ve arka planda sunucuya otomatik fırlatılır. Geliştirici arkasına yaslanıp kahvesini yudumlar.
+
+---
+
+### ❓ Soru 21: `KeyError: 'ContainerConfig'` hatası neden yaşandı?
+* **Cevap:**
+  * 2021 yılında geliştirilmesi durdurulan **Docker Compose v1 (Python)**, konteynırları güncellerken imajın metaverilerinde `ContainerConfig` adında eski bir Docker alanını arar.
+  * GitHub Actions'ta kullandığımız modern **BuildKit (2024+)** derleyicisi ise OCI standartlarına uygun modern imajlar ürettiği için bu gereksiz alanı basmaz.
+  * Eski Compose bu alanı bulamayınca Python `KeyError` vererek patlar. Çözüm, resmi Go diliyle yazılmış modern **Docker Compose v2** eklentisine terfi etmektir.
+
+---
+
+### ❓ Soru 22: `Conflict: container name is already in use` hatası nedir ve nasıl temizlenir?
+* **Cevap:**
+  * Docker'da her konteynır adı benzersiz (unique) olmak zorundadır.
+  * Bir güncelleme işlemi yarıda çökerse, Docker eski konteynırı silemez ama yenisini de aynı isimle başlatamaz.
+  * `docker rm -f <konteynir_adi>` komutu ile çakışan veya askıda kalan yetim (orphaned) konteynır zorla kaldırılarak yol açılır.
 
 ---
 
@@ -655,6 +719,9 @@ Sitemiz yayına girdikten sonra önemli bir mimari problemle karşılaştık ve 
 | `docker push <kullanici/imaj:tag>` | Etiketlenmiş imajı Docker Hub bulutuna yükler. |
 | `docker-compose -f <dosya> pull` | Compose dosyasındaki imajların en güncel sürümlerini Docker Hub'dan indirir. |
 | `docker-compose -f <dosya> up -d` | Belirtilen özel compose dosyasıyla (ör. prod) servisleri ayağa kaldırır. |
+| `docker-compose version` | Kurulu olan Docker Compose sürümünü (v1 vs v2) görüntüler. |
+| `docker rm -f <konteynir>` | Çalışan veya kilitlenmiş bir konteynırı zorla durdurup siler. |
+| `docker container prune -f` | Durdurulmuş tüm gereksiz konteynırları topluca temizler. |
 | `docker compose config` | `.env` değişkenlerinin YAML içine nasıl yerleştiğini doğrular. |
 | `docker compose up -d` | Bütün servisleri derler (build), ağları kurar ve arka planda (-d) sırayla ayağa kaldırır. |
 | `docker compose up -d --build` | Kodlarda değişiklik varsa imajları yeniden derleyip ayağa kaldırır. |
@@ -676,8 +743,10 @@ Sitemiz yayına girdikten sonra önemli bir mimari problemle karşılaştık ve 
 3. Çoklu Servis Orkestrasyonu (Docker Compose) ✅
 4. Production Güvenliği (.env & non-root user) ✅
 5. Docker Hub Registry & İmaj Dağıtımı ✅
-6. CI/CD Otomasyonu (GitHub Actions) ✅
+6. CI Otomasyonu (GitHub Actions Build & Push) ✅
 7. Canlı VPS Sunucusunda Canlı Dağıtım & Doğrulama ✅
+8. Full CD Otomasyonu (GitHub Actions SSH ile Sıfır Dokunuş Canlı Dağıtım) ✅
+
 
 
 
