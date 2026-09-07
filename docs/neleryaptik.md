@@ -459,6 +459,23 @@ DevOps dünyasında en kritik ayrım şudur:
 
 ---
 
+### 14. Aşama: DevOps'un Zirvesi: CI/CD Pipeline (GitHub Actions) 🤖
+
+Artık imajları elle `docker build`, `docker tag` ve `docker push` yapma dönemi kapandı. Tüm süreci **GitHub Actions** ile otomatize ettik:
+
+#### 1. Çalışma Prensibi:
+* Biz kod yazıp sadece `git push origin main` yaptığımız an:
+  1. GitHub bulutunda temiz bir **Ubuntu Sanal Makinesi (Runner)** açılır.
+  2. Depodaki en güncel kodlar çekilir (`actions/checkout`).
+  3. GitHub'ın gizli kasasından (`GitHub Secrets`) Docker Hub kullanıcı adı ve token'ı güvenle okunup giriş yapılır (`docker/login-action`).
+  4. Backend ve Frontend Dockerfile'ları otomatik derlenir ve Docker Hub'a etiketlenerek yüklenir (`docker/build-push-action`).
+  5. İşlem bitince sanal makine kendini imha eder. Sıfır el emeği, %100 otomasyon!
+
+#### 2. Workflow Dosyamızın Konumu:
+* **[`.github/workflows/deploy.yml`](file:///Users/bemres/Desktop/TUIK%20staj/docker-test/.github/workflows/deploy.yml)**
+
+---
+
 ## 🎓 BÖLÜM 3'e Ek: Yeni Kıdemli Soru-Cevaplar
 
 ### ❓ Soru 9: Neden canlı sunucuda `build: ./backend` yerine doğrudan Docker Hub imajı kullanırız?
@@ -474,6 +491,29 @@ DevOps dünyasında en kritik ayrım şudur:
   * Docker Compose varsayılan olarak her zaman `docker-compose.yml` isimli dosyayı arar.
   * Eğer özel bir dosya ismi kullandıysan (örneğin `docker-compose.prod.yml`), Docker'a *"Standart dosyayı değil, şu belirttiğim dosyayı oku"* demek için **`-f` (file)** bayrağı verilir:
     `docker compose -f docker-compose.prod.yml up -d`
+
+---
+
+### ❓ Soru 11: CI/CD nedir ve bir yazılımcının hayatını nasıl değiştirir?
+* **Cevap:**
+  * **CI (Continuous Integration - Sürekli Entegrasyon):** Yazılımcıların yazdığı kodların otomatik olarak birleştirilmesi, test edilmesi ve Docker imajı haline getirilmesidir.
+  * **CD (Continuous Deployment - Sürekli Dağıtım):** Testlerden başarıyla geçen imajların insan müdahalesi olmadan canlı sunucuya gönderilip yayına alınmasıdır.
+  * **Farkı:** Eskiden haftalar süren sürüm çıkarma krizleri, CI/CD sayesinde günde onlarca kez tek bir `git push` ile hatasız ve stressiz yapılır.
+
+---
+
+### ❓ Soru 12: GitHub Actions benim bilgisayarımı mı kullanır?
+* **Cevap:**
+  * **HAYIR!** GitHub kendi veri merkezlerindeki devasa sunuculardan senin için anlık ücretsiz bir Linux makinesi (Ubuntu Runner) tahsis eder.
+  * Senin Mac bilgisayarın kapalı bile olsa, GitHub Actions bulutta derleme ve push işlemlerini tamamlar.
+
+---
+
+### ❓ Soru 13: GitHub Secrets neden gereklidir ve güvenliği nasıl sağlar?
+* **Cevap:**
+  * `deploy.yml` dosyası herkese açık bir Git deposunda durabilir. İçine Docker Hub şifreni yazarsan herkes görür.
+  * **GitHub Secrets**, GitHub'ın arka planda banka seviyesinde şifrelediği özel bir kasadır.
+  * YAML dosyasına şifre yerine sadece `${{ secrets.DOCKERHUB_TOKEN }}` yazarız. GitHub bunu derleme anında gizlice çözer, loglarda bile `***` olarak maskeler.
 
 ---
 
@@ -500,9 +540,14 @@ DevOps dünyasında en kritik ayrım şudur:
 
 ---
 
-## 🚀 Sırada Ne Var?
-1. Docker Hub'a yükleme ve `docker-compose.prod.yml` hazırlandı.
-2. Sırada DevOps dünyasının kutsal kasesi: **CI/CD Pipeline (GitHub Actions)** ile bu imaj derleme ve yükleme sürecini %100 otomatiğe bağlamak!
+## 🏁 Tebrikler: DevOps Uçtan Uca Tamamlandı!
+1. Konteynırlaştırma ve Dockerfile temelleri ✅
+2. Kalıcı Veri (Volumes) & Ağ (Networks) ✅
+3. Çoklu Servis Orkestrasyonu (Docker Compose) ✅
+4. Production Güvenliği (.env & non-root user) ✅
+5. Docker Hub Registry & İmaj Dağıtımı ✅
+6. CI/CD Otomasyonu (GitHub Actions) ✅
+
 
 
 

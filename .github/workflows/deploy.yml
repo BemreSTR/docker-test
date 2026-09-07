@@ -1,0 +1,50 @@
+name: CI/CD Pipeline - Build & Push Docker Images 🐳
+
+# Hangi olayda tetiklenecek?
+on:
+  push:
+    branches:
+      - main  # Sadece 'main' dalına kod push edildiğinde otomatik çalışır
+
+jobs:
+  build-and-push:
+    name: Build and Push to Docker Hub
+    runs-on: ubuntu-latest  # GitHub'ın buluttaki temiz Ubuntu sanal makinesinde koşar
+
+    steps:
+      # 1. Aşama: Depodaki en güncel kodları sanal makineye çek
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Aşama: Gelişmiş Docker Build motorunu (Buildx) hazırla
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      # 3. Aşama: GitHub Secrets kullanarak Docker Hub'a güvenli giriş yap
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4. Aşama: Backend İmajını Otomatik Derle ve Docker Hub'a Push Et
+      - name: Build & Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:1.0.0
+
+      # 5. Aşama: Frontend İmajını Otomatik Derle ve Docker Hub'a Push Et
+      - name: Build & Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:1.0.0
