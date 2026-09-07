@@ -517,6 +517,40 @@ Artık imajları elle `docker build`, `docker tag` ve `docker push` yapma dönem
 
 ---
 
+### ❓ Soru 14: CI/CD yaptık ama şu an projemiz nerede çalışıyor? İnternetten bir arkadaşım bu siteye erişebilir mi?
+* **Cevap: HENÜZ HAYIR!**
+* **Neden? (Fabrika vs. Mağaza vs. Restoran Analojisi):**
+  1. **GitHub:** Senin tasarım ofisin (kodlar burada).
+  2. **GitHub Actions (CI):** Senin **otomatik fabrikan**. Sen `git push` yapınca kutuları paketler.
+  3. **Docker Hub:** Senin **dağıtım depon**. Hazır paketler (`bemres/devops-backend:latest`) bu depoda bekler.
+* **Eksik Kalan Parça:** Paketler depoda hazır ama henüz müşterilerin girebileceği bir **dükkan / restoran (Bulut Sunucu)** kiralamadık!
+* Bir sitenin tüm dünyadan erişilebilmesi için 7/24 açık, sabit bir **Genel IP Adresi (Public IP)** olan bir sunucuya (AWS EC2, DigitalOcean vb.) gidip o depodaki paketleri indirmemiz (`docker compose -f docker-compose.prod.yml up -d`) gerekir.
+
+---
+
+### ❓ Soru 15: Normalde manuel olarak yapacağım 8 adımlık eziyet neydi ve GitHub Actions CD bunu nasıl otomatiğe bağlar?
+* **Cevap:**
+  * **Eski Usul Manuel Eziyet Listesi:**
+    1. Kodda 1 satır değiştir.
+    2. Terminali aç, `docker build` bekle.
+    3. `docker tag` yaz.
+    4. `docker push` ile Docker Hub'a gönder (dakikalarca bekle).
+    5. Terminalden `ssh root@sunucu-ip` ile sunucuya bağlan.
+    6. Sunucu şifreni gir.
+    7. Sunucuda `docker compose -f docker-compose.prod.yml pull` yaz.
+    8. Sunucuda `docker compose up -d` yazıp konteynırları yeniden başlat.
+  * **GitHub Actions ile CD (Continuous Deployment) Mucizesi:**
+    * Sen sadece **`git push`** yaparsın ve kahveni alırsın.
+    * GitHub Actions, `deploy.yml` içine eklenen SSH adımıyla (`appleboy/ssh-action`) senin yerine sunucuya gizlice SSH ile bağlanır:
+      ```bash
+      cd /opt/my-app
+      docker compose -f docker-compose.prod.yml pull
+      docker compose -f docker-compose.prod.yml up -d
+      ```
+    * 60 saniye içinde sen elini bile sürmeden canlı sunucudaki web sitesi yeni kodla güncellenmiş olur!
+
+---
+
 ## 🧠 Sık Kullanılan Kritik Docker & Compose Komutları Sözlüğü
 
 | Komut | Açıklama |
