@@ -16,6 +16,22 @@ if (window.location.protocol.startsWith('http')) {
   runtimeLabel.textContent = 'Doğrudan Yerel Dosya (file://)';
 }
 
+// Dinamik API Sunucusu Tespiti:
+// Tarayıcı bu sayfayı hangi IP veya domain üzerinden açtıysa (örn: 193.111.78.227 veya localhost),
+// Backend API de aynı sunucunun 5001 portunda çalışır.
+const currentHost = window.location.hostname || 'localhost';
+const API_BASE = `http://${currentHost}:5001`;
+
+const detectedApiUrlEl = document.getElementById('detected-api-url');
+if (detectedApiUrlEl) {
+  detectedApiUrlEl.textContent = API_BASE;
+}
+
+// Varsayılan input URL'si
+if (urlInput && !urlInput.value) {
+  urlInput.value = `${API_BASE}/api/health`;
+}
+
 // Metoda göre body alanını gizle / göster
 function updateBodyVisibility() {
   const method = methodSelect.value;
@@ -33,11 +49,21 @@ updateBodyVisibility();
 document.querySelectorAll('.preset-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const method = btn.getAttribute('data-method');
-    const url = btn.getAttribute('data-url');
-    const body = btn.getAttribute('data-body');
+    const path = btn.getAttribute('data-path');
+    const action = btn.getAttribute('data-action');
+    let body = btn.getAttribute('data-body');
+
+    // Eğer dinamik test notu ise zaman damgalı içerik üret
+    if (action === 'auto-note') {
+      const timeStr = new Date().toLocaleTimeString('tr-TR');
+      body = JSON.stringify({
+        title: `CI/CD Canlı Test Notu 🚀 (${timeStr})`,
+        content: `Bu kayıt, ${currentHost} üzerindeki v1.1.0 sürümünden PostgreSQL veritabanına başarıyla yazıldı.`
+      });
+    }
 
     methodSelect.value = method;
-    urlInput.value = url;
+    urlInput.value = path ? `${API_BASE}${path}` : (btn.getAttribute('data-url') || '');
 
     if (body) {
       try {

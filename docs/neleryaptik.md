@@ -566,6 +566,102 @@ Artık imajları elle `docker build`, `docker tag` ve `docker push` yapma dönem
 | `docker compose down -v` | **DİKKAT:** Konteynırlarla birlikte kalıcı veri kasalarını (Volume) da siler. |
 | `docker compose ps` | Compose ile yönetilen servislerin canlı durumunu gösterir. |
 | `docker compose logs -f` | Tüm servislerin (frontend, backend, db) loglarını tek ekranda renkli canlı izletir. |
+---
+
+### 15. Aşama: Canlı Bulut Sunucusuna (VPS) Dağıtım 🌍
+
+Yerel bilgisayarımızdaki testlerin ardından gerçek bir internet sunucusunda (Ubuntu VPS - `193.111.78.227`) sistemimizi yayına aldık:
+
+1. **Sunucuya Sadece Gerekli Prod Dosyalarını Klonlama:**
+   * Sunucuda kaynak koda gerek yoktur; sadece `docker-compose.prod.yml` ve `.env.example` kopyalandı.
+2. **Sunucuda `.env` Yapılandırması:**
+   * `.env.example` kopyalanıp `.env` yapıldı ve canlı ortam için güçlü bir veritabanı şifresi belirlendi.
+3. **Servislerin Ayağa Kaldırılması:**
+   * `docker-compose -f docker-compose.prod.yml up -d`
+   * Docker Hub'dan `devops-backend` ve `devops-frontend` otomatik indi ve PostgreSQL ile birlikte canlı yayına geçti!
+
+---
+
+### 16. Aşama: Canlı Ortam Tarayıcı Ağ Dinamiği & Akıllı API Tespiti 🧠🌐
+
+Sitemiz yayına girdikten sonra önemli bir mimari problemle karşılaştık ve akıllı bir mantıkla çözdük:
+
+1. **Problem (Hardcoded Localhost & CORS/Ağ Hatası):**
+   * Frontend kodunda API adresi `http://localhost:5001` olarak sabit (hardcoded) yazılmıştı.
+   * Tarayıcı `http://193.111.78.227:8081` üzerinden siteyi açtığında, `localhost` kullanıcının kendi bilgisayarını temsil ettiği için kullanıcının bilgisayarında 5001 portunda çalışan bir sunucu bulamadı (`Failed to fetch`).
+2. **Uygulanan Akıllı Dinamik Çözüm (`frontend/app.js`):**
+   * Frontend koduna dinamik host çözümleme eklendi:
+     ```javascript
+     const currentHost = window.location.hostname || 'localhost';
+     const API_BASE = `http://${currentHost}:5001`;
+     ```
+   * Artık site `localhost:8081`'de açılırsa backend olarak `localhost:5001`'e, VPS IP'si `193.111.78.227:8081`'de açılırsa `193.111.78.227:5001`'e, ileride bir alan adı (`app.sitem.com`) bağlanırsa otomatik olarak o alan adına istek atar!
+3. **Yeni Arayüz Özellikleri (`v1.1.0`):**
+   * Sağ üst köşeye **v1.1.0 CI/CD ✨** rozeti eklendi.
+   * Hangi API sunucusuna istek atıldığını gösteren canlı **Hedef API Bilgi Çubuğu** eklendi.
+   * Tek tıkla PostgreSQL'e dinamik saat damgalı kayıt atan **🚀 CI/CD Test Notu Ekle** butonu eklendi.
+
+---
+
+## 🎓 BÖLÜM 4: Canlı Sunucu (VPS) ve Ağ Mimarisi Soru-Cevapları
+
+### ❓ Soru 16: VPS sunucusundaki `.env` dosyasına şifre olarak ne yazmalıyım? İstediğim şifreyi girebilir miyim?
+* **Cevap: EVET, kesinlikle istediğin güçlü şifreyi girebilirsin!**
+* **Neden?**
+  * `.env` dosyası sadece o sunucuya özel bir sırdır.
+  * Sen `DB_PASSWORD=cok_guclu_bir_sifre_123` yazdığında, Docker Compose hem PostgreSQL konteynırını bu şifreyle kurar hem de Backend API konteynırına bu şifreyi verir.
+  * İkisi aynı şifreyi aldığı sürece mükemmel bir uyumla birbirine bağlanır.
+
+---
+
+### ❓ Soru 17: `unknown shorthand flag: 'f' in -f` hatası neden oldu? `docker compose` ile `docker-compose` farkı nedir?
+* **Cevap:**
+  * **Eski Sürüm (Docker Compose v1):** Python ile yazılmış bağımsız bir programdı ve komutu tireliydi: `docker-compose -f ...`
+  * **Yeni Sürüm (Docker Compose v2):** Docker motorunun içine yerleşik bir Go eklentisidir: `docker compose -f ...`
+  * VPS sunucundaki Docker kurulumunda `docker-compose` eklentisi bağımsız ikili (`standalone binary`) olarak kurulu olduğunda, tireli komut (`docker-compose -f ...`) çalışır. Tire koymadan yazdığında `docker` komutu `-f` bayrağını tanımadığı için bu hatayı vermiştir.
+
+---
+
+### ❓ Soru 18: Canlı sunucuya girdiğimde GET isteğinde neden `Failed to fetch / CORS` hatası aldım?
+* **Cevap:**
+  * **En Büyük Yanılgı:** Backend ile Frontend'in aynı Docker ağında (`networks`) konuşması, tarayıcının da oraya eriştiği anlamına gelmez!
+  * HTML ve JavaScript kodları **senin evindeki bilgisayarın tarayıcısında** çalışır.
+  * Tarayıcıdaki kod `http://localhost:5001`'e istek attığında, sunucudaki konteynıra değil senin evindeki bilgisayara bağlanmaya çalıştı.
+  * Ayrıca modern tarayıcılar, genel bir IP adresinden (`193.111.78.227`) senin yerel ağındaki bir cihaza (`localhost`) istek atılmasını **Private Network Access (PNA)** güvenlik kuralı gereği doğrudan engeller.
+  * Çözüm, istek atılacak hedefi sayfanın açıldığı IP'ye (`window.location.hostname`) dinamik olarak yönlendirmektir.
+
+---
+
+### ❓ Soru 19: CI/CD boru hattımızın (Pipeline) çalıştığını canlıda adım adım nasıl doğrularız?
+* **Cevap (Tam Döngü):**
+  1. **Kod Geliştirme (Lokal):** `frontend/app.js`, `index.html` ve `style.css` dosyalarında `v1.1.0` özelliklerini geliştirdik.
+  2. **Push:** `git commit` ve `git push origin main` yaptık.
+  3. **GitHub Actions (Bulut Fabrikası):** GitHub saniyeler içinde yeni imajları derleyip Docker Hub'a `bemres/devops-frontend:latest` ve `1.1.0` olarak yükledi.
+  4. **Canlı Sunucu Güncellemesi (VPS):**
+     ```bash
+     docker-compose -f docker-compose.prod.yml pull
+     docker-compose -f docker-compose.prod.yml up -d
+     ```
+  5. **Sonuç:** Tarayıcıda sayfayı yenilediğimizde `v1.1.0` sürümü ve çalışan istekler anında karşımıza çıktı! Tek bir dosya kopyalamadan canlı sistem güncellendi.
+
+---
+
+## 🧠 Sık Kullanılan Kritik Docker & Compose Komutları Sözlüğü
+
+| Komut | Açıklama |
+| :--- | :--- |
+| `docker login` | Docker Hub hesabına terminalden kimlik doğrulaması yapar. |
+| `docker tag <eski> <kullanici/imaj:tag>` | İmajı Docker Hub standartlarına uygun etiketler / versiyonlar. |
+| `docker push <kullanici/imaj:tag>` | Etiketlenmiş imajı Docker Hub bulutuna yükler. |
+| `docker-compose -f <dosya> pull` | Compose dosyasındaki imajların en güncel sürümlerini Docker Hub'dan indirir. |
+| `docker-compose -f <dosya> up -d` | Belirtilen özel compose dosyasıyla (ör. prod) servisleri ayağa kaldırır. |
+| `docker compose config` | `.env` değişkenlerinin YAML içine nasıl yerleştiğini doğrular. |
+| `docker compose up -d` | Bütün servisleri derler (build), ağları kurar ve arka planda (-d) sırayla ayağa kaldırır. |
+| `docker compose up -d --build` | Kodlarda değişiklik varsa imajları yeniden derleyip ayağa kaldırır. |
+| `docker compose down` | Tüm sistemi (konteynırlar, ağlar) tek komutla kapatır ve temizler. |
+| `docker compose down -v` | **DİKKAT:** Konteynırlarla birlikte kalıcı veri kasalarını (Volume) da siler. |
+| `docker compose ps` | Compose ile yönetilen servislerin canlı durumunu gösterir. |
+| `docker compose logs -f` | Tüm servislerin (frontend, backend, db) loglarını tek ekranda renkli canlı izletir. |
 | `docker exec -it <ad> psql -U <user> -d <db>` | PostgreSQL konteynırının içine SQL terminali açar. |
 | `docker build -t <isim> <dizin>` | Belirtilen dizindeki Dockerfile'dan imaj üretir. |
 | `docker run -d -p <host>:<container> --name <ad> <imaj>` | Tek bir konteynırı manuel çalıştırır. |
@@ -581,6 +677,8 @@ Artık imajları elle `docker build`, `docker tag` ve `docker push` yapma dönem
 4. Production Güvenliği (.env & non-root user) ✅
 5. Docker Hub Registry & İmaj Dağıtımı ✅
 6. CI/CD Otomasyonu (GitHub Actions) ✅
+7. Canlı VPS Sunucusunda Canlı Dağıtım & Doğrulama ✅
+
 
 
 

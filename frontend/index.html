@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DevOps Full-Stack API Playground 🐳</title>
-  <link rel="stylesheet" href="style.css?v=3.0">
+  <link rel="stylesheet" href="style.css?v=4.0">
 </head>
 <body>
   <header class="app-header">
@@ -16,22 +16,32 @@
           <p class="subtitle">Frontend (Nginx) ➔ Backend (Node.js) ➔ Database (PostgreSQL)</p>
         </div>
       </div>
-      <div class="env-badge" id="host-badge">
-        <span class="dot">●</span>
-        <span id="runtime-label">Docker Konteynır</span>
+      <div class="header-badges">
+        <div class="env-badge" id="host-badge">
+          <span class="dot">●</span>
+          <span id="runtime-label">Docker Konteynır</span>
+        </div>
+        <div class="version-badge">v1.1.0 CI/CD ✨</div>
       </div>
     </div>
   </header>
 
   <main class="main-container">
+    <!-- Otomatik Tespit Edilen API Bilgi Çubuğu -->
+    <div class="api-info-bar">
+      <span class="info-icon">🌐</span>
+      <span>Hedef API Sunucusu: <strong id="detected-api-url">http://localhost:5001</strong> <em class="auto-tag">(Otomatik Algılandı)</em></span>
+    </div>
+
     <!-- Hızlı Şablonlar -->
     <section class="presets-section">
       <span class="section-label">Hızlı Şablonlar:</span>
       <div class="preset-buttons">
-        <button class="preset-btn" data-method="GET" data-url="http://localhost:5001/api/health">🏥 Sağlık Durumu (Health)</button>
-        <button class="preset-btn" data-method="GET" data-url="http://localhost:5001/api/notes">📋 Notları Listele (PostgreSQL)</button>
-        <button class="preset-btn" data-method="POST" data-url="http://localhost:5001/api/notes" data-body='{"title": "İlk Notum", "content": "PostgreSQL veritabanına başarıyla kaydedildi!"}'>➕ Not Ekle (PostgreSQL)</button>
-        <button class="preset-btn" data-method="DELETE" data-url="http://localhost:5001/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
+        <button class="preset-btn" data-method="GET" data-path="/api/health">🏥 Sağlık Durumu (Health)</button>
+        <button class="preset-btn" data-method="GET" data-path="/api/notes">📋 Notları Listele (PostgreSQL)</button>
+        <button class="preset-btn" data-method="POST" data-path="/api/notes" data-body='{"title": "İlk Notum", "content": "PostgreSQL veritabanına başarıyla kaydedildi!"}'>➕ Not Ekle</button>
+        <button class="preset-btn pulse-preset" data-method="POST" data-path="/api/notes" data-action="auto-note">🚀 CI/CD Test Notu Ekle</button>
+        <button class="preset-btn" data-method="DELETE" data-path="/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
       </div>
     </section>
 
@@ -46,7 +56,7 @@
           <option value="DELETE">DELETE</option>
           <option value="HEAD">HEAD</option>
         </select>
-        <input type="text" id="request-url" placeholder="http://localhost:5001/api/notes" value="http://localhost:5001/api/health">
+        <input type="text" id="request-url" placeholder="http://193.111.78.227:5001/api/notes" value="">
         <button id="send-btn" class="btn send-btn">
           <span id="btn-text">İstek Gönder</span>
           <span id="btn-spinner" class="spinner hidden"></span>
@@ -73,15 +83,15 @@
       </div>
 
       <div class="response-body-wrapper">
-        <pre id="response-output"><code>Yukarıdaki "Sağlık Durumu" veya "Notları Listele" butonuna basarak Backend API ve PostgreSQL veritabanını test edebilirsiniz.</code></pre>
+        <pre id="response-output"><code>Yukarıdaki "Sağlık Durumu" veya "CI/CD Test Notu Ekle" butonuna basarak Backend API ve PostgreSQL veritabanını test edebilirsiniz.</code></pre>
       </div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <p>Docker Mimarisi: Nginx Frontend ➔ Node.js API ➔ PostgreSQL 16</p>
+    <p>🚀 Production v1.1.0 • GitHub Actions CI/CD ile Otomatik Dağıtıldı 🐳</p>
   </footer>
 
-  <script src="app.js?v=3.0"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>

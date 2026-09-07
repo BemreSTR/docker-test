@@ -36,7 +36,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:1.0.0
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:1.1.0
 
       # 5. Aşama: Frontend İmajını Otomatik Derle ve Docker Hub'a Push Et
       - name: Build & Push Frontend Image
@@ -47,4 +47,5 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:1.0.0
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:1.1.0
+

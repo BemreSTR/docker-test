@@ -20,7 +20,7 @@ services:
 
   # 2. Servis: Backend Node.js API (Docker Hub'dan İndirilir)
   backend:
-    image: bemres/devops-backend:1.0.0
+    image: bemres/devops-backend:latest
     container_name: backend-api-prod
     restart: always
     ports:
@@ -36,7 +36,7 @@ services:
 
   # 3. Servis: Nginx Frontend (Docker Hub'dan İndirilir)
   frontend:
-    image: bemres/devops-frontend:1.0.0
+    image: bemres/devops-frontend:latest
     container_name: web-uygulamam-prod
     restart: always
     ports:
