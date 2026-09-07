@@ -429,11 +429,63 @@ Gerçek bir prod ortamında çalışan sistemlerin en büyük zafiyeti sızınt�
 
 ---
 
+### 12. Aşama: İmajları Buluta Taşımak (Docker Hub Registry & Tagging) 🚀
+
+Yerel bilgisayarımızda çalışan sistemi tüm dünyaya açmak için Docker Hub'a yükledik:
+
+1. **Terminalden Güvenli Giriş (`docker login`):**
+   * Docker Desktop ve Hub hesabımız (`bemres`) terminale bağlandı.
+2. **İmaj Adlandırma Standardı (`docker tag`):**
+   * Docker Hub kuralı: `<kullanici_adi>/<imaj_adi>:<versiyon>`
+   * `docker-test-backend:latest` ➔ `bemres/devops-backend:1.0.0`
+   * `docker-test-frontend:latest` ➔ `bemres/devops-frontend:1.0.0`
+3. **Buluta Yükleme (`docker push`):**
+   * `docker push bemres/devops-backend:1.0.0`
+   * `docker push bemres/devops-frontend:1.0.0`
+   * Katmanlar (Layers) Docker Hub'a yüklendi. Artık dünyanın herhangi bir yerindeki sunucu bu imajları tek komutla çekebilir!
+
+---
+
+### 13. Aşama: Development vs. Production Compose Ayrımı (`docker-compose.prod.yml`) 🏭
+
+DevOps dünyasında en kritik ayrım şudur:
+
+| Özellik | Geliştirme Ortamı (`docker-compose.yml`) | Canlı Prod Ortamı (`docker-compose.prod.yml`) |
+| :--- | :--- | :--- |
+| **Kaynak Kod** | Sunucuda/Mac'te kodlar durur. | **Sunucuda tek satır kaynak kod YOKTUR!** |
+| **Nasıl Çalışır?** | `build: ./backend` (Kodları yerinde derler). | `image: bemres/devops-backend:1.0.0` (Doğrudan Hub'dan çeker). |
+| **Yeniden Başlama** | `restart: unless-stopped` | `restart: always` (Sunucu kapansa da mutlaka geri açılır). |
+| **Çalıştırma** | `docker compose up -d` | `docker compose -f docker-compose.prod.yml up -d` |
+
+---
+
+## 🎓 BÖLÜM 3'e Ek: Yeni Kıdemli Soru-Cevaplar
+
+### ❓ Soru 9: Neden canlı sunucuda `build: ./backend` yerine doğrudan Docker Hub imajı kullanırız?
+* **Cevap:**
+  1. **Kaynak Tüketimi (CPU/RAM Tasarrufu):** Bir sunucuda kod derlemek (`npm install`, C derleyicileri, build araçları) sunucunun işlemcisini ve RAM'ini kilitler. Canlıdaki kullanıcılar yavaşlık yaşar.
+  2. **Güvenlik (Fikri Mülkiyet):** Şirketin kaynak kodlarını prod sunucularına dosya dosya kopyalamak güvenlik açığıdır. Sunucu hacklense bile karşılarında kaynak kodu değil, sadece derlenmiş mühürlü imajı bulurlar.
+  3. **Hız (Saniyeler İçinde Dağıtım):** Docker Hub'dan hazır imajı çekmek 3 saniye sürerken, sunucuda sıfırdan derlemek dakikalar sürer.
+
+---
+
+### ❓ Soru 10: `docker compose -f <dosya> up -d` komutundaki `-f` bayrağı ne anlama gelir?
+* **Cevap:**
+  * Docker Compose varsayılan olarak her zaman `docker-compose.yml` isimli dosyayı arar.
+  * Eğer özel bir dosya ismi kullandıysan (örneğin `docker-compose.prod.yml`), Docker'a *"Standart dosyayı değil, şu belirttiğim dosyayı oku"* demek için **`-f` (file)** bayrağı verilir:
+    `docker compose -f docker-compose.prod.yml up -d`
+
+---
+
 ## 🧠 Sık Kullanılan Kritik Docker & Compose Komutları Sözlüğü
 
 | Komut | Açıklama |
 | :--- | :--- |
-| `docker compose config` | `.env` değişkenlerinin YAML içine nasıl yerleştiğini kontrol eder / doğrular. |
+| `docker login` | Docker Hub hesabına terminalden kimlik doğrulaması yapar. |
+| `docker tag <eski> <kullanici/imaj:tag>` | İmajı Docker Hub standartlarına uygun etiketler / versiyonlar. |
+| `docker push <kullanici/imaj:tag>` | Etiketlenmiş imajı Docker Hub bulutuna yükler. |
+| `docker compose -f <dosya> up -d` | Belirtilen özel compose dosyasıyla (ör. prod) servisleri ayağa kaldırır. |
+| `docker compose config` | `.env` değişkenlerinin YAML içine nasıl yerleştiğini doğrular. |
 | `docker compose up -d` | Bütün servisleri derler (build), ağları kurar ve arka planda (-d) sırayla ayağa kaldırır. |
 | `docker compose up -d --build` | Kodlarda değişiklik varsa imajları yeniden derleyip ayağa kaldırır. |
 | `docker compose down` | Tüm sistemi (konteynırlar, ağlar) tek komutla kapatır ve temizler. |
@@ -443,18 +495,15 @@ Gerçek bir prod ortamında çalışan sistemlerin en büyük zafiyeti sızınt�
 | `docker exec -it <ad> psql -U <user> -d <db>` | PostgreSQL konteynırının içine SQL terminali açar. |
 | `docker build -t <isim> <dizin>` | Belirtilen dizindeki Dockerfile'dan imaj üretir. |
 | `docker run -d -p <host>:<container> --name <ad> <imaj>` | Tek bir konteynırı manuel çalıştırır. |
-| `docker run -v "$PWD":<hedef> ...` | Klasörü canlı ayna olarak bağlar (**Bind Mount**). |
-| `docker run -v <kasa_adi>:<hedef> ...` | Kalıcı veri kasası bağlar (**Named Volume**). |
-| `docker ps -a` | Tüm konteynırları listeler. |
-| `docker rm -f <ad>` | Konteynırı zorla siler. |
 | `docker volume ls` | Kalıcı veri kasalarını listeler. |
 | `docker network ls` | Mevcut Docker ağlarını listeler. |
 
 ---
 
 ## 🚀 Sırada Ne Var?
-1. Yerel ortam ve güvenlik sertleştirmesi %100 tamamlandı.
-2. Sırada: **İmajlarımızı Docker Hub'a (Cloud Registry) yüklemek ve canlı sunucuya dağıtıma hazırlamak!**
+1. Docker Hub'a yükleme ve `docker-compose.prod.yml` hazırlandı.
+2. Sırada DevOps dünyasının kutsal kasesi: **CI/CD Pipeline (GitHub Actions)** ile bu imaj derleme ve yükleme sürecini %100 otomatiğe bağlamak!
+
 
 
 

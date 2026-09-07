@@ -1,0 +1,49 @@
+# ==============================================================================
+# PRODUCTION DOCKER COMPOSE (Canlı Prod Ortamı Reçetesi)
+# ==============================================================================
+# DİKKAT: Bu dosyada hiçbir 'build' adımı YOKTUR!
+# Canlı sunucuya kaynak kodlar kopyalanmaz. İmajlar doğrudan Docker Hub'dan çekilir.
+# ==============================================================================
+
+services:
+  # 1. Servis: PostgreSQL Veritabanı
+  db:
+    image: postgres:16-alpine
+    container_name: veritabani-prod
+    restart: always  # Sunucu yeniden başlasa bile her zaman otomatik açılır
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pg_verisi_prod:/var/lib/postgresql/data
+
+  # 2. Servis: Backend Node.js API (Docker Hub'dan İndirilir)
+  backend:
+    image: bemres/devops-backend:1.0.0
+    container_name: backend-api-prod
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-5001}:5000"
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PORT: 5000
+    depends_on:
+      - db
+
+  # 3. Servis: Nginx Frontend (Docker Hub'dan İndirilir)
+  frontend:
+    image: bemres/devops-frontend:1.0.0
+    container_name: web-uygulamam-prod
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"
+    depends_on:
+      - backend
+
+# Prod Ortamı İçin Kalıcı Veri Kasası
+volumes:
+  pg_verisi_prod:
