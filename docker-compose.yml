@@ -1,4 +1,4 @@
-# Docker Compose: Güvenli ve Parametrik Orkestrasyon
+# Docker Compose: Güvenli ve Parametrik Orkestrasyon (Tersine Vekil Mimarisi)
 services:
   # 1. Servis: PostgreSQL Veritabanı
   db:
@@ -6,20 +6,18 @@ services:
     container_name: veritabani
     restart: unless-stopped
     environment:
-      # Şifreler artık doğrudan kodda değil; .env dosyasından çekiliyor!
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - pg_verisi:/var/lib/postgresql/data
 
-  # 2. Servis: Node.js REST API
+  # 2. Servis: Node.js REST API (Dışarıya Kapalı - Sadece Docker İç Ağında)
   backend:
     build: ./backend
     container_name: backend-api
     restart: unless-stopped
-    ports:
-      - "${BACKEND_PORT:-5001}:5000"
+    # DİKKAT: ports kaldırıldı! Artık Mac'in 5000 AirPlay çakışması veya 5001 portuna gerek kalmadı!
     environment:
       DB_HOST: db
       DB_USER: ${DB_USER}
@@ -29,7 +27,7 @@ services:
     depends_on:
       - db
 
-  # 3. Servis: Nginx Frontend
+  # 3. Servis: Nginx Frontend & Tersine Vekil
   frontend:
     build: ./frontend
     container_name: web-uygulamam

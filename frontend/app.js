@@ -8,28 +8,25 @@ const statusBadge = document.getElementById('status-badge');
 const timeBadge = document.getElementById('time-badge');
 const responseOutput = document.getElementById('response-output');
 const runtimeLabel = document.getElementById('runtime-label');
+const detectedApiUrlEl = document.getElementById('detected-api-url');
 
 // Çalışma ortamı kontrolü
 if (window.location.protocol.startsWith('http')) {
-  runtimeLabel.textContent = `Nginx Web Sunucusu (${window.location.host})`;
+  runtimeLabel.textContent = `Nginx Tersine Vekil (${window.location.host})`;
 } else {
   runtimeLabel.textContent = 'Doğrudan Yerel Dosya (file://)';
 }
 
-// Dinamik API Sunucusu Tespiti:
-// Tarayıcı bu sayfayı hangi IP veya domain üzerinden açtıysa (örn: 193.111.78.227 veya localhost),
-// Backend API de aynı sunucunun 5001 portunda çalışır.
-const currentHost = window.location.hostname || 'localhost';
-const API_BASE = `http://${currentHost}:5001`;
-
-const detectedApiUrlEl = document.getElementById('detected-api-url');
+// Nginx Reverse Proxy sayesinde göreceli yol (relative path) kullanıyoruz:
+// Sayfa hangi domain/IP'de açıldıysa, /api istekleri doğrudan Nginx tarafından
+// arka plandaki Docker iç ağındaki http://backend:5000 konteynırına iletilir.
 if (detectedApiUrlEl) {
-  detectedApiUrlEl.textContent = API_BASE;
+  detectedApiUrlEl.textContent = `${window.location.origin}/api`;
 }
 
 // Varsayılan input URL'si
 if (urlInput && !urlInput.value) {
-  urlInput.value = `${API_BASE}/api/health`;
+  urlInput.value = '/api/health';
 }
 
 // Metoda göre body alanını gizle / göster
@@ -49,21 +46,21 @@ updateBodyVisibility();
 document.querySelectorAll('.preset-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const method = btn.getAttribute('data-method');
-    const path = btn.getAttribute('data-path');
+    const path = btn.getAttribute('data-path') || btn.getAttribute('data-url') || '';
     const action = btn.getAttribute('data-action');
     let body = btn.getAttribute('data-body');
 
-    // Eğer dinamik test notu ise zaman damgalı içerik üret
+    // Dinamik test notu üret
     if (action === 'auto-note') {
       const timeStr = new Date().toLocaleTimeString('tr-TR');
       body = JSON.stringify({
-        title: `CI/CD Canlı Test Notu 🚀 (${timeStr})`,
-        content: `Bu kayıt, ${currentHost} üzerindeki v1.1.0 sürümünden PostgreSQL veritabanına başarıyla yazıldı.`
+        title: `Tersine Vekil Test Notu 🛡️ (${timeStr})`,
+        content: `Bu kayıt, Nginx Reverse Proxy üzerinden (Port 5001 dışarıya tamamen kapalıyken) PostgreSQL'e başarıyla yazıldı!`
       });
     }
 
     methodSelect.value = method;
-    urlInput.value = path ? `${API_BASE}${path}` : (btn.getAttribute('data-url') || '');
+    urlInput.value = path;
 
     if (body) {
       try {
@@ -115,6 +112,7 @@ sendBtn.addEventListener('click', async () => {
       }
     }
 
+    // Nginx Reverse Proxy doğrudan aynı origin üzerinden yönlendirme yapar
     const response = await fetch(url, options);
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
@@ -151,6 +149,7 @@ sendBtn.addEventListener('click', async () => {
       status: response.status,
       statusText: response.statusText,
       duration: `${duration}ms`,
+      routedVia: 'Nginx Reverse Proxy ➔ Docker Internal Network (backend:5000)',
       headers: headersObj,
       data: bodyData
     };
@@ -169,7 +168,7 @@ sendBtn.addEventListener('click', async () => {
 
     responseOutput.textContent = JSON.stringify({
       error: error.message,
-      detail: 'CORS engeli, geçersiz URL veya ağ hatası oluşmuş olabilir.'
+      detail: 'Ağ hatası veya Nginx tersine vekil yönlendirme hatası oluşmuş olabilir.'
     }, null, 2);
   } finally {
     sendBtn.disabled = false;

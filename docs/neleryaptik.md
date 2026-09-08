@@ -736,6 +736,75 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
 
 ---
 
+---
+
+### 18. Aşama: Tersine Vekil (Reverse Proxy) Mimarisi ve Backend İzolasyonu 🛡️🌐
+
+Önceki mimarimizde kullanıcılar siteye `http://193.111.78.227:8081` ile giriyor ve backend'in `5001` portu doğrudan internete açık kalıyordu. Bu aşamada sektörel standartlara geçerek **Nginx Reverse Proxy** mimarisine geçiş yaptık:
+
+```text
+[YENİ GÜVENLİ MİMARİ]
+Kullanıcı (İnternet)
+       │
+       ▼ (Tek Açık Port: 80)
+http://193.111.78.227
+       │
+       ▼
+[ Nginx Web Sunucusu (Reverse Proxy) ]
+       ├── "/"       ──> Statik Web Sayfası (HTML / CSS / JS)
+       └── "/api/*"  ──> Docker Dahili Ağ (http://backend:5000)
+                            │
+                         [ Node.js API ] ──🔒 DIŞ DÜNYAYA KAPALI!
+                            │
+                         [ PostgreSQL ]  ──🔒 DIŞ DÜNYAYA KAPALI!
+```
+
+#### Neler Yaptık?
+1. **`frontend/nginx.conf` Yapılandırması:**
+   * Nginx'e `/api/` ile başlayan tüm istekleri Docker iç ağındaki `http://backend:5000` adresine yönlendirme kuralı (`proxy_pass`) yazdık.
+2. **`frontend/Dockerfile` Güncellemesi:**
+   * Hazırladığımız `nginx.conf` ayarını imajın içine `/etc/nginx/conf.d/default.conf` olarak kopyaladık.
+3. **Frontend Kod Sadeleştirmesi (`app.js` & `index.html`):**
+   * Artık `http://193.111.78.227:5001` gibi karmaşık adreslere gerek kalmadı. Tüm API istekleri `/api/health`, `/api/notes` gibi temiz göreceli yollara (relative paths) çekildi.
+4. **`docker-compose.prod.yml` Güvenlik Sertleştirmesi:**
+   * Backend servisinin `ports:` bölümü tamamen kaldırıldı (Port 5001 dış dünyaya kilitlendi).
+   * Frontend doğrudan standart web portu olan `80:80`'e bağlandı.
+
+---
+
+## 🎓 BÖLÜM 5: Tersine Vekil (Reverse Proxy) ve Ağ Güvenliği Soru-Cevapları
+
+### ❓ Soru 24: Reverse Proxy (Tersine Vekil) nedir ve Forward Proxy'den farkı nedir?
+* **Cevap:**
+  * **Forward Proxy (Vekil Sunucu - Örn: VPN, Okul/Şirket Filtresi):** İstemcinin (kullanıcının) önüne oturur. Kullanıcı internete çıkarken onun kimliğini gizler veya yasaklı siteleri engeller. Hedef sunucu kullanıcının gerçek IP'sini görmez.
+  * **Reverse Proxy (Tersine Vekil - Örn: Nginx, Cloudflare):** Sunucuların önüne oturur. Kullanıcı hangi backend sunucusuna gittiğini bilmez; sadece kapıdaki Nginx ile konuşur. Nginx isteği arkadaki servislere paylaştırır, önbelleğe alır ve backend'i doğrudan saldırılardan korur.
+
+---
+
+### ❓ Soru 25: Nginx konfigürasyonunda neden `proxy_pass http://backend:5000;` yazabildik? IP adresine ne oldu?
+* **Cevap:**
+  * Docker Compose her ayağa kalktığında servisler için sanal bir köprü ağı (Bridge Network) kurar ve içine dahili bir **DNS Sunucusu (Embedded DNS Server)** yerleştirir.
+  * `backend` ismi, `docker-compose.yml` dosyasındaki servis adıdır.
+  * Nginx konteynırı `backend` adını çözümlemek istediğinde Docker DNS hemen araya girer ve onu backend konteynırının o anki iç IP'sine (örneğin `172.18.0.3`) yönlendirir.
+  * Böylece konteynır IP'si değişse bile konfigürasyonumuz asla bozulmaz!
+
+---
+
+### ❓ Soru 26: Backend portunu (`5001`) Compose dosyasından silince frontend ona nasıl erişebiliyor?
+* **Cevap:**
+  * `ports:` direktifi bir portu **sunucunun dışına (internete / host işletim sistemine)** açmak içindir.
+  * `backend` ve `frontend` aynı Docker ağı içinde yaşadıkları için birbirleriyle tüm portlardan özgürce konuşabilirler.
+  * `ports:` bölümünü silmek, sadece dışarıdaki yabancıların (internet kullanıcılarının) doğrudan backend'e sızmasını engeller. Nginx ise aynı ağın içinde olduğu için `backend:5000` portuna rahatça ulaşır.
+
+---
+
+### ❓ Soru 27: Reverse Proxy mimarisi CORS sorununu nasıl kökten çözer?
+* **Cevap:**
+  * Tarayıcıların **Aynı Köken İlkesi (Same-Origin Policy)** kuralına göre: Protokol (`http`), Alan Adı (`193.111.78.227`) ve Port (`80`) aynı olduğu sürece istekler "aynı kökenden" kabul edilir ve CORS kuralları devreye bile girmez.
+  * Artık HTML sayfamız da, attığımız `/api/notes` isteği de aynı `http://193.111.78.227` (Port 80) üzerinden geçtiği için tarayıcı bunu kendi evi gibi görür. Sıfır CORS hatası!
+
+---
+
 ## 🧠 Sık Kullanılan Kritik Docker & Compose Komutları Sözlüğü
 
 | Komut | Açıklama |
@@ -745,6 +814,7 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
 | `docker push <kullanici/imaj:tag>` | Etiketlenmiş imajı Docker Hub bulutuna yükler. |
 | `docker-compose -f <dosya> pull` | Compose dosyasındaki imajların en güncel sürümlerini Docker Hub'dan indirir. |
 | `docker-compose -f <dosya> up -d` | Belirtilen özel compose dosyasıyla (ör. prod) servisleri ayağa kaldırır. |
+| `docker-compose -f <dosya> up -d --remove-orphans` | Servisleri kaldırırken eskiyen yetim konteynırları otomatik temizler. |
 | `docker-compose version` | Kurulu olan Docker Compose sürümünü (v1 vs v2) görüntüler. |
 | `docker rm -f <konteynir>` | Çalışan veya kilitlenmiş bir konteynırı zorla durdurup siler. |
 | `docker container prune -f` | Durdurulmuş tüm gereksiz konteynırları topluca temizler. |
@@ -772,6 +842,8 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
 6. CI Otomasyonu (GitHub Actions Build & Push) ✅
 7. Canlı VPS Sunucusunda Canlı Dağıtım & Doğrulama ✅
 8. Full CD Otomasyonu (GitHub Actions SSH ile Sıfır Dokunuş Canlı Dağıtım) ✅
+9. Tersine Vekil (Reverse Proxy) Mimarisi ve Backend Dış İzolasyonu (v1.2.0) ✅
+
 
 
 

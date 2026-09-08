@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DevOps Full-Stack API Playground 🐳</title>
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <link rel="stylesheet" href="style.css?v=5.0">
 </head>
 <body>
   <header class="app-header">
@@ -13,24 +13,24 @@
         <span class="whale">🐳</span>
         <div>
           <h1>DevOps Full-Stack Playground</h1>
-          <p class="subtitle">Frontend (Nginx) ➔ Backend (Node.js) ➔ Database (PostgreSQL)</p>
+          <p class="subtitle">Nginx (Reverse Proxy) ➔ Backend (Docker İç Ağı) ➔ PostgreSQL</p>
         </div>
       </div>
       <div class="header-badges">
         <div class="env-badge" id="host-badge">
           <span class="dot">●</span>
-          <span id="runtime-label">Docker Konteynır</span>
+          <span id="runtime-label">Nginx Tersine Vekil</span>
         </div>
-        <div class="version-badge">v1.1.0 CI/CD ✨</div>
+        <div class="version-badge">v1.2.0 Proxy 🛡️</div>
       </div>
     </div>
   </header>
 
   <main class="main-container">
-    <!-- Otomatik Tespit Edilen API Bilgi Çubuğu -->
+    <!-- Nginx Reverse Proxy Bilgi Çubuğu -->
     <div class="api-info-bar">
-      <span class="info-icon">🌐</span>
-      <span>Hedef API Sunucusu: <strong id="detected-api-url">http://localhost:5001</strong> <em class="auto-tag">(Otomatik Algılandı)</em></span>
+      <span class="info-icon">🛡️</span>
+      <span>Mimari: <strong>Nginx Reverse Proxy</strong> ➔ <strong id="detected-api-url">/api</strong> <em class="auto-tag">Port 5001 Dışarıya Kilitli 🔒</em></span>
     </div>
 
     <!-- Hızlı Şablonlar -->
@@ -39,8 +39,8 @@
       <div class="preset-buttons">
         <button class="preset-btn" data-method="GET" data-path="/api/health">🏥 Sağlık Durumu (Health)</button>
         <button class="preset-btn" data-method="GET" data-path="/api/notes">📋 Notları Listele (PostgreSQL)</button>
-        <button class="preset-btn" data-method="POST" data-path="/api/notes" data-body='{"title": "İlk Notum", "content": "PostgreSQL veritabanına başarıyla kaydedildi!"}'>➕ Not Ekle</button>
-        <button class="preset-btn pulse-preset" data-method="POST" data-path="/api/notes" data-action="auto-note">🚀 CI/CD Test Notu Ekle</button>
+        <button class="preset-btn" data-method="POST" data-path="/api/notes" data-body='{"title": "Reverse Proxy Notu", "content": "Nginx üzerinden arka plandaki gizli backend konteynırına ulaştı!"}'>➕ Not Ekle</button>
+        <button class="preset-btn pulse-preset" data-method="POST" data-path="/api/notes" data-action="auto-note">🚀 v1.2.0 Test Notu Ekle</button>
         <button class="preset-btn" data-method="DELETE" data-path="/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
       </div>
     </section>
@@ -56,7 +56,7 @@
           <option value="DELETE">DELETE</option>
           <option value="HEAD">HEAD</option>
         </select>
-        <input type="text" id="request-url" placeholder="http://193.111.78.227:5001/api/notes" value="">
+        <input type="text" id="request-url" placeholder="/api/notes" value="/api/health">
         <button id="send-btn" class="btn send-btn">
           <span id="btn-text">İstek Gönder</span>
           <span id="btn-spinner" class="spinner hidden"></span>
@@ -83,15 +83,15 @@
       </div>
 
       <div class="response-body-wrapper">
-        <pre id="response-output"><code>Yukarıdaki "Sağlık Durumu" veya "CI/CD Test Notu Ekle" butonuna basarak Backend API ve PostgreSQL veritabanını test edebilirsiniz.</code></pre>
+        <pre id="response-output"><code>Yukarıdaki "Sağlık Durumu" veya "v1.2.0 Test Notu Ekle" butonuna basarak Nginx Tersine Vekil ve PostgreSQL veritabanını test edebilirsiniz.</code></pre>
       </div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <p>🚀 Production v1.1.0 • GitHub Actions CI/CD ile Otomatik Dağıtıldı 🐳</p>
+    <p>🛡️ Production v1.2.0 • Nginx Reverse Proxy & GitHub Actions Zero-Touch CD 🐳</p>
   </footer>
 
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=5.0"></script>
 </body>
 </html>

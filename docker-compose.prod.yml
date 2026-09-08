@@ -1,16 +1,17 @@
 # ==============================================================================
-# PRODUCTION DOCKER COMPOSE (Canlı Prod Ortamı Reçetesi)
+# PRODUCTION DOCKER COMPOSE (Canlı Prod Ortamı Reçetesi - v1.2.0)
 # ==============================================================================
-# DİKKAT: Bu dosyada hiçbir 'build' adımı YOKTUR!
-# Canlı sunucuya kaynak kodlar kopyalanmaz. İmajlar doğrudan Docker Hub'dan çekilir.
+# Mimari: Nginx Tersine Vekil (Reverse Proxy) Modeli
+# - Backend API dış dünyaya (internete) TAMAMEN KAPATILMIŞTIR (Port 5001 yok!).
+# - Tek açık kapı Nginx Web Sunucusudur (Port 80).
 # ==============================================================================
 
 services:
-  # 1. Servis: PostgreSQL Veritabanı
+  # 1. Servis: PostgreSQL Veritabanı (Dışarıya Kapalı - Sadece İç Ağda)
   db:
     image: postgres:16-alpine
     container_name: veritabani-prod
-    restart: always  # Sunucu yeniden başlasa bile her zaman otomatik açılır
+    restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -18,13 +19,12 @@ services:
     volumes:
       - pg_verisi_prod:/var/lib/postgresql/data
 
-  # 2. Servis: Backend Node.js API (Docker Hub'dan İndirilir)
+  # 2. Servis: Backend Node.js API (Dışarıya Kapalı - Sadece İç Ağda)
   backend:
     image: bemres/devops-backend:latest
     container_name: backend-api-prod
     restart: always
-    ports:
-      - "${BACKEND_PORT:-5001}:5000"
+    # DİKKAT: 'ports:' bölümü kaldırıldı! Backend doğrudan internete erişilemez.
     environment:
       DB_HOST: db
       DB_USER: ${DB_USER}
@@ -34,16 +34,17 @@ services:
     depends_on:
       - db
 
-  # 3. Servis: Nginx Frontend (Docker Hub'dan İndirilir)
+  # 3. Servis: Nginx Frontend & Tersine Vekil (Tek Açık Dış Kapı)
   frontend:
     image: bemres/devops-frontend:latest
     container_name: web-uygulamam-prod
     restart: always
     ports:
-      - "${FRONTEND_PORT:-8081}:80"
+      # Standart HTTP portu (Port yazmadan doğrudan erişim)
+      - "80:80"
     depends_on:
       - backend
 
-# Prod Ortamı İçin Kalıcı Veri Kasası
+# Prod Ortamı Kalıcı Veri Kasası
 volumes:
   pg_verisi_prod:
