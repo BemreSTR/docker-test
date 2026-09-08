@@ -1,12 +1,33 @@
-# Gizli Ortam Değişkenleri (ASLA repoya gitmemeli!)
+# ===================================================
+# GÜVENLİK VE GİZLİLİK (ASLA repoya gitmemeli!)
+# ===================================================
 .env
+.env*.local
+*.pem
+*.key
 
-# Sistem dosyaları
+# ===================================================
+# İŞLETİM SİSTEMİ ÇÖPLERİ (Mac & Windows)
+# ===================================================
 .DS_Store
+**/.DS_Store
 Thumbs.db
+Desktop.ini
 
-# Node.js artıkları
+# ===================================================
+# BAĞIMLILIKLAR VE ÇALIŞMA ZAMANI ARTIKLARI
+# ===================================================
 node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+
+# ===================================================
+# EDİTÖR VE GELİŞTİRME ARAÇLARI
+# ===================================================
+.idea/
+.vscode/
+*.swp
+*.swo
