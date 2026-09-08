@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Build & Push Docker Images 🐳
+name: CI/CD Pipeline - Build, Test & Security Scan 🐳🛡️
 
 # Hangi olayda tetiklenecek?
 on:
@@ -7,8 +7,8 @@ on:
       - main  # Sadece 'main' dalına kod push edildiğinde otomatik çalışır
 
 jobs:
-  build-and-push:
-    name: Build and Push to Docker Hub
+  build-test-and-deploy:
+    name: Test, Build & Deploy Pipeline
     runs-on: ubuntu-latest  # GitHub'ın buluttaki temiz Ubuntu sanal makinesinde koşar
 
     steps:
@@ -16,18 +16,33 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Aşama: Gelişmiş Docker Build motorunu (Buildx) hazırla
+      # 2. Aşama: 🧪 Otomatik Kalite Kapısı (Backend Birim Testleri)
+      # DİKKAT: Testler başarısız olursa boru hattı burada durur! İmaj derlenmez, canlıya gidilmez!
+      - name: Set up Node.js for Testing
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          npm ci
+          npm test
+
+      # 3. Aşama: Gelişmiş Docker Build motorunu (Buildx) hazırla
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3. Aşama: GitHub Secrets kullanarak Docker Hub'a güvenli giriş yap
+      # 4. Aşama: GitHub Secrets kullanarak Docker Hub'a güvenli giriş yap
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Aşama: Backend İmajını Otomatik Derle ve Docker Hub'a Push Et
+      # 5. Aşama: Backend İmajını Otomatik Derle ve Docker Hub'a Push Et
       - name: Build & Push Backend Image
         uses: docker/build-push-action@v5
         with:
@@ -38,7 +53,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:1.2.0
 
-      # 5. Aşama: Frontend İmajını Otomatik Derle ve Docker Hub'a Push Et
+      # 6. Aşama: Frontend İmajını Otomatik Derle ve Docker Hub'a Push Et
       - name: Build & Push Frontend Image
         uses: docker/build-push-action@v5
         with:
@@ -49,7 +64,18 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:1.2.0
 
-      # 6. Aşama: VPS Sunucusuna Bağlan ve Canlıyı Güncelle (Full CD)
+      # 7. Aşama: 🛡️ DevSecOps Güvenlik Taraması (Aqua Security Trivy)
+      # Üretilen imajı güvenlik açıklarına (CVE) karşı otomatik tarar ve özet tablo çıkarır
+      - name: Run Trivy Vulnerability Scanner on Backend Image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:1.2.0
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      # 8. Aşama: VPS Sunucusuna Bağlan ve Canlıyı Güncelle (Full CD)
+      # Yalnızca tüm testler ve derlemeler başarılı olursa canlı sunucu güncellenir
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:

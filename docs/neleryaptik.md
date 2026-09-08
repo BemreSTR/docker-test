@@ -805,10 +805,80 @@ http://193.111.78.227
 
 ---
 
+---
+
+### 19. Aşama: DevSecOps Kültürü: Otomatik Test (Quality Gate) & Trivy Güvenlik Taraması 🧪🛡️
+
+CI/CD boru hattımız daha önce her gelen kodu gözü kapalı derleyip canlıya atıyordu. Bu durum, yanlışlıkla bozuk bir kod push edildiğinde canlıdaki sitenin çökmesine sebep olabilirdi. Bu aşamada sektörel **DevSecOps (Geliştirme + Güvenlik + Operasyon)** ve **Shift-Left** prensiplerini sisteme entegre ettik:
+
+```text
+[Geliştirici: git push origin main]
+       │
+       ▼
+1. Aşama: Depodaki Kodları Çek (Checkout)
+       │
+       ▼
+2. Aşama: 🧪 OTOMATİK BİRİM TESTLERİ (Quality Gate - npm test)
+   ├── Başarısız ise ──❌ BORU HATTI DERHAL DURDURULUR! (Canlıya dokunulmaz!)
+   └── Başarılı ise  ──✅ Derleme Aşamasına Geç
+       │
+       ▼
+3. Aşama: Docker İmajlarını Derle ve Docker Hub'a Push Et
+       │
+       ▼
+4. Aşama: 🛡️ TRIVY GÜVENLİK MÜFETTİŞİ (Vulnerability Scan)
+   ├── Üretilen imajı bilinen CVE zafiyetlerine karşı tara
+   └── Güvenlik denetim raporu oluştur
+       │
+       ▼
+5. Aşama: VPS'e SSH ile Canlı Dağıtım (Full CD)
+```
+
+#### Neler Yaptık?
+1. **Test Edilebilir Mimari (`backend/app.js` & `backend/server.js`):**
+   * Express uygulamasını (`app`) dinleme mantığından ayırarak modüler hale getirdik. Böylece test ortamında veritabanı olmadan veya geçici portlarda test edilebildi.
+2. **Otomatik Test Paketi (`backend/test/api.test.js`):**
+   * Node.js'in modern yerleşik test motoru (`node --test` ve `node:assert`) ile 4 kritik fonksiyonel testi yazdık:
+     * Sağlık kontrolü endpoint yapısı testi,
+     * Başlıksız not ekleme doğrulama (validation) testi (`400 Bad Request`),
+     * Sadece boşluk içeren başlık reddi testi,
+     * Olmayan rotalar için 404 testi.
+3. **CI Pipeline'ına Test Kapısı (Quality Gate):**
+   * `.github/workflows/deploy.yml` içine `npm ci && npm test` adımı eklendi. Test başarısız olursa derleme ve canlı dağıtım **kesinlikle başlamaz**.
+4. **Aqua Security Trivy Güvenlik Taraması:**
+   * CI boru hattına Trivy entegre edildi. Üretilen Docker imajları bilinen açıklar (CVE) için otomatik taranır ve GitHub loglarına güvenlik raporu basılır.
+
+---
+
+## 🎓 BÖLÜM 6: DevSecOps, Otomatik Test ve Güvenlik Soru-Cevapları
+
+### ❓ Soru 28: "Shift-Left" felsefesi DevOps ve DevSecOps'ta ne anlama gelir?
+* **Cevap:**
+  * Geleneksel yazılım süreçlerinde test ve güvenlik en son aşamada, yani kod canlıya çıktıktan (sağ tarafta) sonra yapılırdı. Bu aşamada bir hata bulmak şirkete binlerce dolar ve itibar kaybına mal olurdu.
+  * **Shift-Left (Sola Kaydırma):** Test ve güvenlik kontrollerini sürecin en başına (zaman çizgisinde sola), yani yazılımcı kodu yazar yazmaz **CI aşamasına** çekmektir. Hata canlıya gitmeden, henüz GitHub'dayken anında yakalanır ve engellenir.
+
+---
+
+### ❓ Soru 29: Neden testleri Docker Build aşamasından ÖNCE çalıştırırız?
+* **Cevap:**
+  * **Zaman ve Kaynak Tasarrufu (Fail Fast İlkesi):** Docker imajı derlemek ve Docker Hub'a yüklemek dakikalar sürer ve sunucu kaynaklarını tüketir.
+  * Birim testleri ise saniyenin onda birinde (`300 milisaniye`) biter. Kodda bir hata varsa boşuna dakikalarca Docker imajı derlemekle vakit kaybetmeyiz; sistem saniyeler içinde kırmızı yanarak hatayı bildirir (**Hızlı Başarısız Ol - Fail Fast**).
+
+---
+
+### ❓ Soru 30: Trivy nedir ve konteynır güvenliğinde CVE taraması neden hayati önem taşır?
+* **Cevap:**
+  * Yazdığın kodda sıfır hata olsa bile, kullandığın temel Linux imajında (`alpine`, `ubuntu`) veya indirdiğin üçüncü parti kütüphanelerde (`express`, `pg`) dünyaca bilinen açıklar (**CVE - Common Vulnerabilities and Exposures**) bulunabilir.
+  * **Trivy (Aqua Security):** Konteynır imajının içindeki her bir paketin sürümünü global siber güvenlik veritabanlarıyla karşılaştırır. Saldırganların sunucuya sızabileceği kritik bir zafiyet varsa bunu raporlar.
+
+---
+
 ## 🧠 Sık Kullanılan Kritik Docker & Compose Komutları Sözlüğü
 
 | Komut | Açıklama |
 | :--- | :--- |
+| `npm test` | Node.js projesinde tanımlı otomatik birim/entegrasyon testlerini çalıştırır. |
+| `node --test` | Node.js 18+ ile gelen yerleşik, harici kütüphane gerektirmeyen test motoru. |
 | `docker login` | Docker Hub hesabına terminalden kimlik doğrulaması yapar. |
 | `docker tag <eski> <kullanici/imaj:tag>` | İmajı Docker Hub standartlarına uygun etiketler / versiyonlar. |
 | `docker push <kullanici/imaj:tag>` | Etiketlenmiş imajı Docker Hub bulutuna yükler. |
@@ -843,6 +913,8 @@ http://193.111.78.227
 7. Canlı VPS Sunucusunda Canlı Dağıtım & Doğrulama ✅
 8. Full CD Otomasyonu (GitHub Actions SSH ile Sıfır Dokunuş Canlı Dağıtım) ✅
 9. Tersine Vekil (Reverse Proxy) Mimarisi ve Backend Dış İzolasyonu (v1.2.0) ✅
+10. DevSecOps Kültürü: Otomatik Test (Quality Gate) & Trivy Güvenlik Taraması ✅
+
 
 
 
