@@ -570,7 +570,7 @@ Artık imajları elle `docker build`, `docker tag` ve `docker push` yapma dönem
 
 ### 15. Aşama: Canlı Bulut Sunucusuna (VPS) Dağıtım 🌍
 
-Yerel bilgisayarımızdaki testlerin ardından gerçek bir internet sunucusunda (Ubuntu VPS - `193.111.78.227`) sistemimizi yayına aldık:
+Yerel bilgisayarımızdaki testlerin ardından gerçek bir internet sunucusunda (Ubuntu VPS - `<YOUR_VPS_IP>`) sistemimizi yayına aldık:
 
 1. **Sunucuya Sadece Gerekli Prod Dosyalarını Klonlama:**
    * Sunucuda kaynak koda gerek yoktur; sadece `docker-compose.prod.yml` ve `.env.example` kopyalandı.
@@ -588,14 +588,14 @@ Sitemiz yayına girdikten sonra önemli bir mimari problemle karşılaştık ve 
 
 1. **Problem (Hardcoded Localhost & CORS/Ağ Hatası):**
    * Frontend kodunda API adresi `http://localhost:5001` olarak sabit (hardcoded) yazılmıştı.
-   * Tarayıcı `http://193.111.78.227:8081` üzerinden siteyi açtığında, `localhost` kullanıcının kendi bilgisayarını temsil ettiği için kullanıcının bilgisayarında 5001 portunda çalışan bir sunucu bulamadı (`Failed to fetch`).
+   * Tarayıcı `http://<YOUR_VPS_IP>:8081` üzerinden siteyi açtığında, `localhost` kullanıcının kendi bilgisayarını temsil ettiği için kullanıcının bilgisayarında 5001 portunda çalışan bir sunucu bulamadı (`Failed to fetch`).
 2. **Uygulanan Akıllı Dinamik Çözüm (`frontend/app.js`):**
    * Frontend koduna dinamik host çözümleme eklendi:
      ```javascript
      const currentHost = window.location.hostname || 'localhost';
      const API_BASE = `http://${currentHost}:5001`;
      ```
-   * Artık site `localhost:8081`'de açılırsa backend olarak `localhost:5001`'e, VPS IP'si `193.111.78.227:8081`'de açılırsa `193.111.78.227:5001`'e, ileride bir alan adı (`app.sitem.com`) bağlanırsa otomatik olarak o alan adına istek atar!
+   * Artık site `localhost:8081`'de açılırsa backend olarak `localhost:5001`'e, VPS IP'si `http://<YOUR_VPS_IP>:8081`'de açılırsa `http://<YOUR_VPS_IP>:5001`'e, ileride bir alan adı (`app.sitem.com`) bağlanırsa otomatik olarak o alan adına istek atar!
 3. **Yeni Arayüz Özellikleri (`v1.1.0`):**
    * Sağ üst köşeye **v1.1.0 CI/CD ✨** rozeti eklendi.
    * Hangi API sunucusuna istek atıldığını gösteren canlı **Hedef API Bilgi Çubuğu** eklendi.
@@ -611,7 +611,7 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
 
 #### 1. Sıfır Müdahale (Zero-Touch) SSH Mimarisi:
 * GitHub Secrets kasasına 3 kritik güvenlik anahtarı tanımladık:
-  * `VPS_HOST`: Canlı sunucumuzun IP adresi (`193.111.78.227`).
+  * `VPS_HOST`: Canlı sunucumuzun IP adresi (`<YOUR_VPS_IP>`).
   * `VPS_USERNAME`: Sunucu kullanıcı adı (`root`).
   * `VPS_PASSWORD`: Sunucu erişim parolası.
 * `.github/workflows/deploy.yml` dosyasına 6. adım olarak SSH tetikleyicisi eklendi:
@@ -672,7 +672,7 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
   * **En Büyük Yanılgı:** Backend ile Frontend'in aynı Docker ağında (`networks`) konuşması, tarayıcının da oraya eriştiği anlamına gelmez!
   * HTML ve JavaScript kodları **senin evindeki bilgisayarın tarayıcısında** çalışır.
   * Tarayıcıdaki kod `http://localhost:5001`'e istek attığında, sunucudaki konteynıra değil senin evindeki bilgisayara bağlanmaya çalıştı.
-  * Ayrıca modern tarayıcılar, genel bir IP adresinden (`193.111.78.227`) senin yerel ağındaki bir cihaza (`localhost`) istek atılmasını **Private Network Access (PNA)** güvenlik kuralı gereği doğrudan engeller.
+  * Ayrıca modern tarayıcılar, genel bir IP adresinden (`<YOUR_VPS_IP>`) senin yerel ağındaki bir cihaza (`localhost`) istek atılmasını **Private Network Access (PNA)** güvenlik kuralı gereği doğrudan engeller.
   * Çözüm, istek atılacak hedefi sayfanın açıldığı IP'ye (`window.location.hostname`) dinamik olarak yönlendirmektir.
 
 ---
@@ -727,7 +727,7 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
 | **CD (Sürekli Dağıtım)** | GitHub Actions SSH Action (Push-based) | **GitOps (Pull-based / ArgoCD, FluxCD):** Sunucu dışarıdan SSH'a kapatılır. Kümenin içindeki bir ajan Git'i dinleyip güncellemeleri kendi çeker. |
 | **Orkestrasyon** | Docker Compose (Tek Sunucu) | **Kubernetes (K8s) / AWS ECS:** 50+ sunuculu kümeler. Trafik arttığında otomatik olarak 2 konteynırdan 50 konteynıra çıkar (**Auto-scaling**). |
 | **Ortam Ayrımı (Pipelines)** | Doğrudan `main` ➔ Prod | `dev` ➔ `staging/qa` (Canlının kopyası) ➔ `prod` (Kıdemli mühendis kod incelemesi ve onay kapısı ile). |
-| **Ağ ve Güvenlik** | Ham IP ve Port (`193.111.78.227:8081`) | **Load Balancer + Tersine Vekil (Nginx/Traefik) + SSL:** Backend portları asla internete açılmaz; sadece **443 (HTTPS)** açıktır, alan adı bağlanır (`https://app.sitem.com`). |
+| **Ağ ve Güvenlik** | Ham IP ve Port (`<YOUR_VPS_IP>:8081`) | **Load Balancer + Tersine Vekil (Nginx/Traefik) + SSL:** Backend portları asla internete açılmaz; sadece **443 (HTTPS)** açıktır, alan adı bağlanır (`https://app.sitem.com`). |
 | **Şifre Yönetimi** | Sunucuda `.env` + GitHub Secrets | HashiCorp Vault, AWS Secrets Manager, Doppler. |
 | **İzlenebilirlik (Observability)**| `docker logs` | **Prometheus + Grafana + ELK Stack / Datadog:** Canlı metrik panoları, sunucu çöktüğünde telefonlara anında giden acil durum alarmları. |
 
@@ -740,14 +740,14 @@ Daha önce Docker imajlarımız GitHub Actions ile otomatik derlenip Docker Hub'
 
 ### 18. Aşama: Tersine Vekil (Reverse Proxy) Mimarisi ve Backend İzolasyonu 🛡️🌐
 
-Önceki mimarimizde kullanıcılar siteye `http://193.111.78.227:8081` ile giriyor ve backend'in `5001` portu doğrudan internete açık kalıyordu. Bu aşamada sektörel standartlara geçerek **Nginx Reverse Proxy** mimarisine geçiş yaptık:
+Önceki mimarimizde kullanıcılar siteye `http://<YOUR_VPS_IP>:8081` ile giriyor ve backend'in `5001` portu doğrudan internete açık kalıyordu. Bu aşamada sektörel standartlara geçerek **Nginx Reverse Proxy** mimarisine geçiş yaptık:
 
 ```text
 [YENİ GÜVENLİ MİMARİ]
 Kullanıcı (İnternet)
        │
        ▼ (Tek Açık Port: 80)
-http://193.111.78.227
+http://<YOUR_VPS_IP>
        │
        ▼
 [ Nginx Web Sunucusu (Reverse Proxy) ]
@@ -765,7 +765,7 @@ http://193.111.78.227
 2. **`frontend/Dockerfile` Güncellemesi:**
    * Hazırladığımız `nginx.conf` ayarını imajın içine `/etc/nginx/conf.d/default.conf` olarak kopyaladık.
 3. **Frontend Kod Sadeleştirmesi (`app.js` & `index.html`):**
-   * Artık `http://193.111.78.227:5001` gibi karmaşık adreslere gerek kalmadı. Tüm API istekleri `/api/health`, `/api/notes` gibi temiz göreceli yollara (relative paths) çekildi.
+   * Artık `http://<YOUR_VPS_IP>:5001` gibi karmaşık adreslere gerek kalmadı. Tüm API istekleri `/api/health`, `/api/notes` gibi temiz göreceli yollara (relative paths) çekildi.
 4. **`docker-compose.prod.yml` Güvenlik Sertleştirmesi:**
    * Backend servisinin `ports:` bölümü tamamen kaldırıldı (Port 5001 dış dünyaya kilitlendi).
    * Frontend doğrudan standart web portu olan `80:80`'e bağlandı.
@@ -800,8 +800,8 @@ http://193.111.78.227
 
 ### ❓ Soru 27: Reverse Proxy mimarisi CORS sorununu nasıl kökten çözer?
 * **Cevap:**
-  * Tarayıcıların **Aynı Köken İlkesi (Same-Origin Policy)** kuralına göre: Protokol (`http`), Alan Adı (`193.111.78.227`) ve Port (`80`) aynı olduğu sürece istekler "aynı kökenden" kabul edilir ve CORS kuralları devreye bile girmez.
-  * Artık HTML sayfamız da, attığımız `/api/notes` isteği de aynı `http://193.111.78.227` (Port 80) üzerinden geçtiği için tarayıcı bunu kendi evi gibi görür. Sıfır CORS hatası!
+  * Tarayıcıların **Aynı Köken İlkesi (Same-Origin Policy)** kuralına göre: Protokol (`http`), Alan Adı (`<YOUR_VPS_IP>`) ve Port (`80`) aynı olduğu sürece istekler "aynı kökenden" kabul edilir ve CORS kuralları devreye bile girmez.
+  * Artık HTML sayfamız da, attığımız `/api/notes` isteği de aynı `http://<YOUR_VPS_IP>` (Port 80) üzerinden geçtiği için tarayıcı bunu kendi evi gibi görür. Sıfır CORS hatası!
 
 ---
 

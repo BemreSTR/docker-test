@@ -42,7 +42,7 @@ Tarayıcı ──:80───> Nginx (Reverse Proxy)
 * Yazdığımız `nginx.conf` dosyasını konteynırın `/etc/nginx/conf.d/default.conf` konumuna kopyalayacak.
 
 ### 3. Frontend Kodları (`frontend/app.js` & `index.html`) [GÜNCELLEME]
-* Artık `http://193.111.78.227:5001` gibi karmaşık adreslere gerek kalmayacak.
+* Artık `http://<YOUR_VPS_IP>:5001` gibi karmaşık adreslere gerek kalmayacak.
 * İstekler doğrudan göreceli yol (`relative path`) olacak: `/api/health`, `/api/notes`.
 
 ### 4. Docker Compose Dosyaları (`docker-compose.prod.yml` & `docker-compose.yml`) [GÜNCELLEME]
@@ -61,6 +61,6 @@ Tarayıcı ──:80───> Nginx (Reverse Proxy)
 2. **CI/CD Otomasyonu:**
    * GitHub Actions imajları derleyecek, Docker Hub'a basacak ve VPS'e SSH ile dağıtacak.
 3. **Canlı Sunucu Doğrulaması (VPS):**
-   * Tarayıcıda hiçbir port yazmadan doğrudan `http://193.111.78.227` açılacak.
-   * `http://193.111.78.227:5001/api/health` adresine gidildiğinde bağlantının reddedildiği (portun dışarıya kapandığı) teyit edilecek.
+   * Tarayıcıda hiçbir port yazmadan doğrudan `http://<YOUR_VPS_IP>` açılacak.
+   * `http://<YOUR_VPS_IP>:5001/api/health` adresine gidildiğinde bağlantının reddedildiği (portun dışarıya kapandığı) teyit edilecek.
    * Arayüzden not ekleme/listeleme yapılarak Nginx'in istekleri arkadaki gizli backend'e kusursuz ilettiği doğrulanacak.
