@@ -1,7 +1,7 @@
 {
   "name": "devops-backend-api",
-  "version": "1.0.0",
-  "description": "DevOps pratikleri için PostgreSQL bağlantılı hafif Node.js API",
+  "version": "2.0.0",
+  "description": "Cloud-Native Telemetry Gateway ve PostgreSQL bağlantılı kurumsal API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
