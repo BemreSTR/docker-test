@@ -1,28 +1,33 @@
-# 🐳 DevOps & DevSecOps Full-Stack Cloud Lab
+# 🐳 Cloud-Native Observatory & System Gateway (v2.0.0)
 
 [![CI/CD Pipeline](https://github.com/BemreSTR/docker-test/actions/workflows/deploy.yml/badge.svg)](https://github.com/BemreSTR/docker-test/actions)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
 ![NodeJS](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Golang](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 ![Trivy](https://img.shields.io/badge/Trivy_Security-1904DA?style=for-the-badge&logo=aqua&logoColor=white)
 ![Ubuntu VPS](https://img.shields.io/badge/Ubuntu_VPS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 
-> **Uçtan Uca Konteynırlaştırma, Tersine Vekil (Reverse Proxy), Otomatik Test & Güvenlik Kapıları ve Sıfır Dokunuş (Zero-Touch) CI/CD Boru Hattı İçeren Kurumsal Seviye Canlı Dağıtım Laboratuvarı.**
+> **Tersine Vekil (Reverse Proxy), Canlı APM Telemetrisi, Çoklu Mikroservis Entegrasyonu, DevSecOps Güvenlik Denetimleri ve Sıfır Dokunuş (Zero-Touch) CI/CD Boru Hattı İçeren Dağıtık Sistem ve Gözlenebilirlik Portalı.**
 
 ---
 
 ## 🌟 Proje Özeti
 
-Bu proje; sıradan bir web uygulamasını alıp **12-Factor App**, **Konteynır İzolasyonu**, **Tersine Vekil Mimarisi**, **DevSecOps (Shift-Left)** ve **Tam Otomatik Dağıtım (Continuous Deployment)** prensiplerine göre modernize edilmiş, üretime (Production) hazır hale getirilmiş bir DevOps portfolyo çalışmasıdır.
+Bu proje; Gebze Teknik Üniversitesi Bilgisayar Mühendisliği stajı kapsamında geliştirilmiş; **12-Factor App**, **Konteynır İzolasyonu**, **Tersine Vekil Mimarisi (Nginx)**, **DevSecOps (Shift-Left)** ve **Tam Otomatik Dağıtım (Zero-Touch CD)** prensiplerine göre yapılandırılmış kurumsal seviyede bir bulut bilişim ve dağıtık sistem platformudur.
 
-Lokal geliştirme ortamından başlayarak, bulutta GitHub sanal makinelerinde test edilen, Docker Hub üzerinde versiyonlanan ve bağımsız bir **Ubuntu VPS** sunucusunda sıfır insan müdahalesiyle canlıya alınan çok katmanlı (Multi-Tier) bir sistemdir.
+Sistem, iki ana modülden oluşmaktadır:
+1. **Core Gateway & Telemetry Portalı (`Port 80`):** Nginx Edge Router, izole Node.js telemetri API'si ve PostgreSQL 16 veritabanı kümesi.
+2. **TaskPilot Engine (`Port 8082`):** Go (Golang) ile geliştirilmiş, JWT kimlik doğrulamalı ve veritabanı migrasyon servisine sahip kurumsal görev yönetim mikroservisi.
+
+Lokal geliştirme ortamından başlayarak, bulutta GitHub sanal makinelerinde 8 entegrasyon testi ile doğrulanan, Aqua Security Trivy ile taranan, Docker Hub üzerinde versiyonlanan ve bağımsız bir **Ubuntu VPS** sunucusunda sıfır insan müdahalesiyle canlıya alınan çok katmanlı (Multi-Tier) bir mimaridir.
 
 ---
 
-## 🏗️ Sistem Mimarisi
+## 🏗️ Dağıtık Sistem Mimarisi
 
 Sistem, dış tehditlere karşı **saldırı yüzeyini daraltan (Attack Surface Reduction)** ve istemci ile mikroservisler arasına güvenlik katmanı ören **Nginx Reverse Proxy** modeli üzerine kuruludur:
 
@@ -38,16 +43,17 @@ Sistem, dış tehditlere karşı **saldırı yüzeyini daraltan (Attack Surface 
                                           │
                   ┌───────────────────────┴───────────────────────┐
                   │                                               │
-           İstek: "/" (Statik Dosyalar)                    İstek: "/api/*"
+           İstek: "/" (Statik Dashboard)                   İstek: "/api/*"
                   │                                               │
                   ▼                                               ▼
-         [ HTML / CSS / Vanilla JS ]                     Docker Dahili Bridge Ağı
+         [ Mission Control UI ]                          Docker Dahili Bridge Ağı
                                                                   │
                                                                   ▼
                                                    ┌─────────────────────────────┐
-                                                   │   Node.js REST API (v1.2.0) │
-                                                   │   Konteynır: backend-api    │
-                                                   │  🔒 Dış Dünyaya Kapalı (5000)│
+                                                   │ Node.js Telemetry (v2.0.0)  │
+                                                   │ Konteynır: backend-api      │
+                                                   │ 🔒 Dış Dünyaya Kapalı (5000)│
+                                                   │ 👤 USER: node (UID 1000)    │
                                                    └──────────────┬──────────────┘
                                                                   │
                                                                   ▼ (İç Ağ: 5432)
@@ -56,6 +62,12 @@ Sistem, dış tehditlere karşı **saldırı yüzeyini daraltan (Attack Surface 
                                                    │   Konteynır: veritabani     │
                                                    │  🔒 Dış Dünyaya Kapalı      │
                                                    │  💾 Volume: pg_verisi_prod  │
+                                                   └─────────────────────────────┘
+                                                                  ▲
+                                                                  │
+                                                   ┌──────────────┴──────────────┐
+                                                   │ TaskPilot Engine (:8082)    │
+                                                   │ Go (Chi) + JWT + Migrations │
                                                    └─────────────────────────────┘
 ```
 
@@ -131,7 +143,7 @@ docker-test/
 ├── docs/
 │   ├── Fazlar.md             # Projenin 11 büyük gelişim fazının detaylı hikayesi
 │   ├── neleryaptik.md        # 30+ Soru-Cevap içeren kapsamlı DevOps günlüğü & başucu kaynağı
-│   └── Nginx-Reverse-Proxy.md# Tersine Vekil mimarisi teknik uygulama planı
+│   └── Nginx-Reverse-Proxy.md # Tersine Vekil mimarisi teknik uygulama planı
 ├── docker-compose.yml        # Lokal geliştirme orkestrasyonu
 ├── docker-compose.prod.yml   # Canlı sunucu (Production) orkestrasyonu
 ├── .env.example              # Ortam değişkenleri örnek şablonu

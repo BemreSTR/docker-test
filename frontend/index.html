@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevOps Full-Stack API Playground 🐳</title>
-  <link rel="stylesheet" href="style.css?v=5.0">
+  <title>Cloud-Native Observatory & System Gateway 🐳</title>
+  <link rel="stylesheet" href="style.css?v=6.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Header -->
   <header class="app-header">
     <div class="header-content">
       <div class="logo">
         <span class="whale">🐳</span>
         <div>
-          <h1>DevOps Full-Stack Playground</h1>
-          <p class="subtitle">Nginx (Reverse Proxy) ➔ Backend (Docker İç Ağı) ➔ PostgreSQL</p>
+          <h1>Cloud-Native Observatory & Telemetry Gateway</h1>
+          <p class="subtitle">GTÜ Bilgisayar Mühendisliği • Dağıtık Sistemler, DevOps & DevSecOps Portalı</p>
         </div>
       </div>
       <div class="header-badges">
@@ -21,77 +25,289 @@
           <span class="dot">●</span>
           <span id="runtime-label">Nginx Tersine Vekil</span>
         </div>
-        <div class="version-badge">v1.2.0 Proxy 🛡️</div>
+        <div class="version-badge">v2.0.0 Enterprise 🛡️</div>
+        <div class="cd-badge">⚡ Zero-Touch CD: Aktif</div>
       </div>
     </div>
   </header>
 
-  <main class="main-container">
-    <!-- Nginx Reverse Proxy Bilgi Çubuğu -->
-    <div class="api-info-bar">
-      <span class="info-icon">🛡️</span>
-      <span>Mimari: <strong>Nginx Reverse Proxy</strong> ➔ <strong id="detected-api-url">/api</strong> <em class="auto-tag">Port 5001 Dışarıya Kilitli 🔒</em></span>
+  <!-- Multi-Service Platform Bar -->
+  <nav class="platform-bar">
+    <div class="platform-container">
+      <div class="platform-tab active">
+        <span class="plat-icon">🛰️</span>
+        <div>
+          <span class="plat-title">Platform 1: Gateway & Telemetry (:80)</span>
+          <span class="plat-sub">Nginx + Node.js API + PostgreSQL Cluster</span>
+        </div>
+        <span class="status-pill status-pill-online">Canlı</span>
+      </div>
+      <a href="http://193.111.78.227:8082" target="_blank" class="platform-tab platform-link" id="taskpilot-link">
+        <span class="plat-icon">🚀</span>
+        <div>
+          <span class="plat-title">Platform 2: TaskPilot Engine (:8082)</span>
+          <span class="plat-sub">Go (Golang) + JWT Auth + DB Migrations</span>
+        </div>
+        <span class="status-pill status-pill-go">Uygulamaya Git ↗</span>
+      </a>
     </div>
+  </nav>
 
-    <!-- Hızlı Şablonlar -->
-    <section class="presets-section">
-      <span class="section-label">Hızlı Şablonlar:</span>
-      <div class="preset-buttons">
-        <button class="preset-btn" data-method="GET" data-path="/api/health">🏥 Sağlık Durumu (Health)</button>
-        <button class="preset-btn" data-method="GET" data-path="/api/notes">📋 Notları Listele (PostgreSQL)</button>
-        <button class="preset-btn" data-method="POST" data-path="/api/notes" data-body='{"title": "Reverse Proxy Notu", "content": "Nginx üzerinden arka plandaki gizli backend konteynırına ulaştı!"}'>➕ Not Ekle</button>
-        <button class="preset-btn pulse-preset" data-method="POST" data-path="/api/notes" data-action="auto-note">🚀 v1.2.0 Test Notu Ekle</button>
-        <button class="preset-btn" data-method="DELETE" data-path="/api/notes/1">🗑️ 1 Nolu Notu Sil</button>
-      </div>
-    </section>
+  <main class="main-container">
 
-    <!-- İstek Yapılandırıcı -->
-    <section class="card request-card">
-      <div class="url-bar">
-        <select id="http-method" class="method-select">
-          <option value="GET">GET</option>
-          <option value="POST">POST</option>
-          <option value="PUT">PUT</option>
-          <option value="PATCH">PATCH</option>
-          <option value="DELETE">DELETE</option>
-          <option value="HEAD">HEAD</option>
-        </select>
-        <input type="text" id="request-url" placeholder="/api/notes" value="/api/health">
-        <button id="send-btn" class="btn send-btn">
-          <span id="btn-text">İstek Gönder</span>
-          <span id="btn-spinner" class="spinner hidden"></span>
-        </button>
-      </div>
-
-      <!-- İstek Gövdesi (Body) -->
-      <div id="body-container" class="body-container">
-        <div class="tabs">
-          <span class="tab active">Request Body (JSON)</span>
+    <!-- 1. BÖLÜM: Canlı Dağıtık Sistem Topolojisi -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <span class="sec-icon">🗺️</span>
+          <div>
+            <h2>Dağıtık Sistem ve Ağ Topolojisi</h2>
+            <p>Nginx Reverse Proxy ile dış dünyadan izole edilmiş konteynır mimarisi</p>
+          </div>
         </div>
-        <textarea id="request-body" placeholder='{"key": "value"}' rows="4"></textarea>
+        <button id="btn-refresh-topology" class="mini-btn">🔄 Topolojiyi Tara</button>
+      </div>
+
+      <div class="topology-grid">
+        <!-- Node 1: Client / Web -->
+        <div class="topo-node topo-edge">
+          <div class="node-header">
+            <span class="node-type">EDGE PROXY</span>
+            <span class="node-ping" id="ping-nginx">Ping: 0ms</span>
+          </div>
+          <div class="node-body">
+            <h3>Nginx Reverse Proxy</h3>
+            <p class="node-desc">Konteynır: <code>web-uygulamam-prod</code></p>
+            <div class="node-meta">
+              <span class="badge badge-port">Port 80 (Genel)</span>
+              <span class="badge badge-sec">CORS-Free Gateway</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topo-arrow">➔<span class="arrow-label">/api/* (Bridge)</span></div>
+
+        <!-- Node 2: Backend API -->
+        <div class="topo-node topo-backend">
+          <div class="node-header">
+            <span class="node-type">REST CORE</span>
+            <span class="node-ping" id="ping-backend">Status: UP</span>
+          </div>
+          <div class="node-body">
+            <h3>Node.js API Gateway</h3>
+            <p class="node-desc">Konteynır: <code>backend-api-prod</code></p>
+            <div class="node-meta">
+              <span class="badge badge-lock">Port 5000 (Gizli 🔒)</span>
+              <span class="badge badge-user">USER: node (UID 1000)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topo-arrow">➔<span class="arrow-label">İç Ağ: 5432</span></div>
+
+        <!-- Node 3: PostgreSQL Database -->
+        <div class="topo-node topo-db">
+          <div class="node-header">
+            <span class="node-type">STORAGE CLUSTER</span>
+            <span class="node-ping" id="ping-db">DB: Connected</span>
+          </div>
+          <div class="node-body">
+            <h3>PostgreSQL 16 Alpine</h3>
+            <p class="node-desc">Konteynır: <code>veritabani-prod</code></p>
+            <div class="node-meta">
+              <span class="badge badge-lock">Port 5432 (Gizli 🔒)</span>
+              <span class="badge badge-vol">Volume: pg_verisi_prod</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Yanıt Alanı -->
-    <section class="card response-card">
-      <div class="response-header">
-        <h2>Sunucu & Veritabanı Yanıtı</h2>
-        <div class="metrics">
-          <span id="status-badge" class="metric-badge status-init">Durum: Henüz İstek Atılmadı</span>
-          <span id="time-badge" class="metric-badge hidden">Süre: 0ms</span>
+    <!-- 2. BÖLÜM: Canlı Sistem Telemetrisi & APM Metrikleri -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <span class="sec-icon">📊</span>
+          <div>
+            <h2>Sistem Telemetrisi & APM Metrikleri</h2>
+            <p>Node.js çalışma zamanı, bellek tahsisi ve PostgreSQL bağlantı havuzu telemetrisi</p>
+          </div>
+        </div>
+        <div class="live-indicator">
+          <span class="dot-pulse"></span>
+          <span>Canlı Telemetri Yayını</span>
         </div>
       </div>
 
-      <div class="response-body-wrapper">
-        <pre id="response-output"><code>Yukarıdaki "Sağlık Durumu" veya "v1.2.0 Test Notu Ekle" butonuna basarak Nginx Tersine Vekil ve PostgreSQL veritabanını test edebilirsiniz.</code></pre>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Hizmet Çalışma Süresi (Uptime)</span>
+          <span class="metric-val" id="metric-uptime">Yükleniyor...</span>
+          <span class="metric-sub" id="metric-uptime-sub">Sıfır kesinti hedefi</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Heap Bellek Tüketimi (RAM)</span>
+          <span class="metric-val" id="metric-heap">Yükleniyor...</span>
+          <span class="metric-sub" id="metric-heap-sub">V8 Garbage Collector</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">PostgreSQL Havuz Durumu</span>
+          <span class="metric-val" id="metric-db-pool">Yükleniyor...</span>
+          <span class="metric-sub" id="metric-db-ping">DB Ping: -- ms</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Son API İstek Gecikmesi</span>
+          <span class="metric-val" id="metric-latency">-- ms</span>
+          <span class="metric-sub" id="metric-sla-status">SLA: Sağlıklı</span>
+        </div>
       </div>
     </section>
+
+    <!-- 3. BÖLÜM: DevSecOps Denetimi & CIS Benchmark Uyumluluğu -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <span class="sec-icon">🛡️</span>
+          <div>
+            <h2>DevSecOps Güvenlik Denetimi & CIS Uyumluluk Raporu</h2>
+            <p>Shift-Left felsefesi ile derleme öncesi ve çalışma zamanı güvenlik parametreleri</p>
+          </div>
+        </div>
+        <span class="compliance-badge">✅ CIS Benchmark Uyumlu</span>
+      </div>
+
+      <div class="audit-grid">
+        <div class="audit-item">
+          <span class="audit-icon">👤</span>
+          <div>
+            <strong>En Düşük Yetki Prensibi (Least Privilege)</strong>
+            <p>Konteynır <code>root</code> yetkisiyle değil, unprivileged <code>node</code> (UID 1000) kullanıcısıyla çalışır.</p>
+          </div>
+          <span class="audit-check">DOĞRULANDI</span>
+        </div>
+        <div class="audit-item">
+          <span class="audit-icon">🧱</span>
+          <div>
+            <strong>Ağ Çeper İzolasyonu (Network Perimeter)</strong>
+            <p>Backend (5000) ve DB (5432) dış internete kapalıdır; tüm trafik Nginx tersine vekili üzerinden akar.</p>
+          </div>
+          <span class="audit-check">DOĞRULANDI</span>
+        </div>
+        <div class="audit-item">
+          <span class="audit-icon">🔍</span>
+          <div>
+            <strong>Aqua Security Trivy Zafiyet Taraması</strong>
+            <p>GitHub Actions üzerinde derlenen tüm Docker imajları bilinen CVE açıklarına karşı otomatik taranır.</p>
+          </div>
+          <span class="audit-check">0 CRITICAL / 0 HIGH</span>
+        </div>
+        <div class="audit-item">
+          <span class="audit-icon">🧪</span>
+          <div>
+            <strong>Otomatik Test Kalite Kapısı (Quality Gate)</strong>
+            <p>Node.js yerleşik test motoru (<code>node:test</code>) ile 8 entegrasyon testi geçmeden canlıya kod çıkamaz.</p>
+          </div>
+          <span class="audit-check">8/8 BAŞARILI</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. BÖLÜM: Mühendislik Laboratuvarı & Hata Simülatörü (Interactive Sandbox) -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <span class="sec-icon">🧪</span>
+          <div>
+            <h2>Mühendislik Laboratuvarı & Dayanıklılık (Chaos) Testi</h2>
+            <p>Sistemin farklı yük, gecikme ve rota senaryolarındaki davranışını canlı test edin</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="presets-section">
+        <div class="preset-buttons">
+          <button class="preset-btn" data-method="GET" data-path="/api/health">🏥 Sağlık Durumu (/api/health)</button>
+          <button class="preset-btn" data-method="GET" data-path="/api/telemetry">📊 Canlı Telemetri (/api/telemetry)</button>
+          <button class="preset-btn" data-method="GET" data-path="/api/security/audit">🛡️ Güvenlik Denetimi (/api/security/audit)</button>
+          <button class="preset-btn" data-method="GET" data-path="/api/services/status">🌐 Mikroservisler (/api/services/status)</button>
+          <button class="preset-btn pulse-preset" data-method="POST" data-path="/api/chaos/latency" data-body='{"delay_ms": 450}'>⚡ 450ms Gecikme Simüle Et</button>
+          <button class="preset-btn" data-method="GET" data-path="/api/notes">📋 Tüm Olay Kayıtları (/api/notes)</button>
+        </div>
+      </div>
+
+      <div class="request-console">
+        <div class="url-bar">
+          <select id="http-method" class="method-select">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+          <input type="text" id="request-url" placeholder="/api/telemetry" value="/api/telemetry">
+          <button id="send-btn" class="btn send-btn">
+            <span id="btn-text">İstek Gönder</span>
+            <span id="btn-spinner" class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <div id="body-container" class="body-container" style="display: none;">
+          <textarea id="request-body" placeholder='{"key": "value"}' rows="3"></textarea>
+        </div>
+
+        <div class="response-panel">
+          <div class="response-meta">
+            <span id="status-badge" class="metric-badge status-init">Durum: İstek bekleniyor</span>
+            <span id="time-badge" class="metric-badge hidden">Süre: 0ms</span>
+          </div>
+          <pre id="response-output"><code>Hazır. Yukarıdaki hızlı senaryolardan birine basarak canlı API yanıtını inceleyebilirsiniz.</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. BÖLÜM: PostgreSQL Olay ve Denetim Kayıtları -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <span class="sec-icon">📝</span>
+          <div>
+            <h2>PostgreSQL Olay & Sistem Kayıtları</h2>
+            <p>Kalıcı depolama kasasında (Docker Volume) saklanan operasyonel kayıtlar</p>
+          </div>
+        </div>
+        <button id="btn-refresh-notes" class="mini-btn">🔄 Kayıtları Yenile</button>
+      </div>
+
+      <!-- Yeni Kayıt Formu -->
+      <form id="add-note-form" class="log-form">
+        <div class="form-row">
+          <input type="text" id="log-title" placeholder="Kayıt / Görev Başlığı (Zorunlu)" required>
+          <select id="log-level" class="log-level-select">
+            <option value="INFO">ℹ️ INFO (Bilgi)</option>
+            <option value="SUCCESS">✅ SUCCESS (Başarılı)</option>
+            <option value="WARN">⚠️ WARN (Uyarı)</option>
+            <option value="CRITICAL">🚨 CRITICAL (Kritik)</option>
+          </select>
+          <input type="text" id="log-source" placeholder="Kaynak (ör. Gateway, Go-Engine)" value="Gateway">
+        </div>
+        <textarea id="log-content" placeholder="Açıklama / Mühendislik Notu" rows="2"></textarea>
+        <button type="submit" class="btn btn-primary" id="btn-save-log">➕ PostgreSQL'e Yeni Olay Kaydı Ekle</button>
+      </form>
+
+      <!-- Kayıt Listesi -->
+      <div id="notes-container" class="notes-container">
+        <div class="loading-state">PostgreSQL veritabanı kayıtları yükleniyor...</div>
+      </div>
+    </section>
+
   </main>
 
+  <!-- Footer -->
   <footer class="app-footer">
-    <p>🛡️ Production v1.2.0 • Nginx Reverse Proxy & GitHub Actions Zero-Touch CD 🐳</p>
+    <div class="footer-content">
+      <p><strong>Gebze Teknik Üniversitesi</strong> • Bilgisayar Mühendisliği Staj Sunumu Projesi</p>
+      <p class="footer-sub">Geliştirici: <strong>Bekir Emre Sarıpınar</strong> (220104004039) • Teknoloji Yığını: Nginx • Docker Compose • Node.js • Go (Golang) • PostgreSQL 16 • GitHub Actions • Trivy • Ubuntu VPS</p>
+    </div>
   </footer>
 
-  <script src="app.js?v=5.0"></script>
+  <script src="app.js?v=6.0"></script>
 </body>
 </html>

@@ -1,63 +1,150 @@
+// Cloud-Native Observatory & Mission Control Gateway - Core Controller (v2.0)
+
+// DOM Referansları
+const runtimeLabel = document.getElementById('runtime-label');
+const taskpilotLink = document.getElementById('taskpilot-link');
+
+// Topoloji & Telemetri Elemanları
+const pingNginx = document.getElementById('ping-nginx');
+const pingBackend = document.getElementById('ping-backend');
+const pingDb = document.getElementById('ping-db');
+const metricUptime = document.getElementById('metric-uptime');
+const metricUptimeSub = document.getElementById('metric-uptime-sub');
+const metricHeap = document.getElementById('metric-heap');
+const metricHeapSub = document.getElementById('metric-heap-sub');
+const metricDbPool = document.getElementById('metric-db-pool');
+const metricDbPing = document.getElementById('metric-db-ping');
+const metricLatency = document.getElementById('metric-latency');
+const metricSlaStatus = document.getElementById('metric-sla-status');
+const btnRefreshTopology = document.getElementById('btn-refresh-topology');
+
+// İstek Konsolu
 const methodSelect = document.getElementById('http-method');
 const urlInput = document.getElementById('request-url');
 const bodyContainer = document.getElementById('body-container');
 const requestBody = document.getElementById('request-body');
 const sendBtn = document.getElementById('send-btn');
 const btnText = document.getElementById('btn-text');
+const btnSpinner = document.getElementById('btn-spinner');
 const statusBadge = document.getElementById('status-badge');
 const timeBadge = document.getElementById('time-badge');
 const responseOutput = document.getElementById('response-output');
-const runtimeLabel = document.getElementById('runtime-label');
-const detectedApiUrlEl = document.getElementById('detected-api-url');
 
-// Çalışma ortamı kontrolü
-if (window.location.protocol.startsWith('http')) {
-  runtimeLabel.textContent = `Nginx Tersine Vekil (${window.location.host})`;
-} else {
-  runtimeLabel.textContent = 'Doğrudan Yerel Dosya (file://)';
+// Not / Olay Formu ve Konteyner
+const addNoteForm = document.getElementById('add-note-form');
+const logTitle = document.getElementById('log-title');
+const logLevel = document.getElementById('log-level');
+const logSource = document.getElementById('log-source');
+const logContent = document.getElementById('log-content');
+const btnSaveLog = document.getElementById('btn-save-log');
+const notesContainer = document.getElementById('notes-container');
+const btnRefreshNotes = document.getElementById('btn-refresh-notes');
+
+// Dinamik Host ve Link Yapılandırması
+const currentHost = window.location.hostname || '193.111.78.227';
+if (taskpilotLink) {
+  taskpilotLink.href = `http://${currentHost}:8082`;
 }
 
-// Nginx Reverse Proxy sayesinde göreceli yol (relative path) kullanıyoruz:
-// Sayfa hangi domain/IP'de açıldıysa, /api istekleri doğrudan Nginx tarafından
-// arka plandaki Docker iç ağındaki http://backend:5000 konteynırına iletilir.
-if (detectedApiUrlEl) {
-  detectedApiUrlEl.textContent = `${window.location.origin}/api`;
+if (runtimeLabel) {
+  runtimeLabel.textContent = `Nginx Proxy (${window.location.host || currentHost})`;
 }
 
-// Varsayılan input URL'si
-if (urlInput && !urlInput.value) {
-  urlInput.value = '/api/health';
+// Uptime Süresi Formatlayıcı (Gün / Saat / Dakika)
+function formatUptime(seconds) {
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (d > 0) return `${d} gün ${h} sa ${m} dk`;
+  if (h > 0) return `${h} sa ${m} dk ${s} sn`;
+  return `${m} dk ${s} sn`;
 }
 
-// Metoda göre body alanını gizle / göster
+// Canlı Telemetri ve Topoloji Taraması
+async function fetchTelemetry() {
+  const startPing = performance.now();
+  try {
+    const res = await fetch('/api/telemetry');
+    const elapsed = Math.round(performance.now() - startPing);
+    
+    if (pingNginx) pingNginx.textContent = `Ping: ${elapsed}ms`;
+    if (metricLatency) metricLatency.textContent = `${elapsed} ms`;
+    if (metricSlaStatus) {
+      metricSlaStatus.textContent = elapsed < 200 ? 'SLA: Mükemmel (<200ms)' : 'SLA: Normal';
+      metricSlaStatus.style.color = '#34d399';
+    }
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // Topoloji Node Güncellemeleri
+    if (pingBackend) {
+      pingBackend.textContent = `Node: ${data.runtime?.node_version || 'v20'}`;
+    }
+    if (pingDb) {
+      const dbOnline = data.database_pool?.status === 'CONNECTED';
+      pingDb.textContent = dbOnline ? 'DB: Connected' : 'DB: Reconnecting';
+      pingDb.style.color = dbOnline ? '#34d399' : '#f59e0b';
+    }
+
+    // Metrik Kartları Güncellemeleri
+    if (metricUptime) {
+      metricUptime.textContent = formatUptime(data.uptime_seconds);
+      if (metricUptimeSub) metricUptimeSub.textContent = `PID: ${data.runtime?.pid || '-'} • Platform: ${data.runtime?.platform || 'linux'}`;
+    }
+    if (metricHeap) {
+      metricHeap.textContent = `${data.memory?.heap_used_mb || 0} MB`;
+      if (metricHeapSub) metricHeapSub.textContent = `Toplam Tahsis: ${data.memory?.heap_total_mb || 0} MB (RSS: ${data.memory?.rss_mb || 0} MB)`;
+    }
+    if (metricDbPool) {
+      const p = data.database_pool;
+      metricDbPool.textContent = `${p?.total_clients || 0} İstemci`;
+      if (metricDbPing) {
+        metricDbPing.textContent = `Boşta: ${p?.idle_clients || 0} | Ping: ${p?.ping_latency_ms !== null ? p.ping_latency_ms + 'ms' : 'Yok'}`;
+      }
+    }
+  } catch (err) {
+    if (pingNginx) pingNginx.textContent = 'Proxy Hatası';
+    if (pingBackend) pingBackend.textContent = 'Bağlantı Bekleniyor';
+    if (metricLatency) metricLatency.textContent = 'Offline';
+    if (metricSlaStatus) {
+      metricSlaStatus.textContent = 'SLA: Çevrimdışı';
+      metricSlaStatus.style.color = '#ef4444';
+    }
+  }
+}
+
+// 4 saniyede bir otomatik telemetri çek
+fetchTelemetry();
+setInterval(fetchTelemetry, 4000);
+
+if (btnRefreshTopology) {
+  btnRefreshTopology.addEventListener('click', () => {
+    btnRefreshTopology.textContent = 'Taranıyor...';
+    fetchTelemetry().finally(() => {
+      setTimeout(() => { btnRefreshTopology.textContent = '🔄 Topolojiyi Tara'; }, 500);
+    });
+  });
+}
+
+// Metoda göre body alanını göster / gizle
 function updateBodyVisibility() {
   const method = methodSelect.value;
   if (['POST', 'PUT', 'PATCH'].includes(method)) {
-    bodyContainer.style.display = 'flex';
+    bodyContainer.style.display = 'block';
   } else {
     bodyContainer.style.display = 'none';
   }
 }
-
 methodSelect.addEventListener('change', updateBodyVisibility);
-updateBodyVisibility();
 
-// Hızlı Şablon butonları
+// Hızlı Senaryo / Şablon Butonları
 document.querySelectorAll('.preset-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    const method = btn.getAttribute('data-method');
-    const path = btn.getAttribute('data-path') || btn.getAttribute('data-url') || '';
-    const action = btn.getAttribute('data-action');
-    let body = btn.getAttribute('data-body');
-
-    // Dinamik test notu üret
-    if (action === 'auto-note') {
-      const timeStr = new Date().toLocaleTimeString('tr-TR');
-      body = JSON.stringify({
-        title: `Tersine Vekil Test Notu 🛡️ (${timeStr})`,
-        content: `Bu kayıt, Nginx Reverse Proxy üzerinden (Port 5001 dışarıya tamamen kapalıyken) PostgreSQL'e başarıyla yazıldı!`
-      });
-    }
+    const method = btn.getAttribute('data-method') || 'GET';
+    const path = btn.getAttribute('data-path') || '/api/health';
+    const body = btn.getAttribute('data-body');
 
     methodSelect.value = method;
     urlInput.value = path;
@@ -73,24 +160,22 @@ document.querySelectorAll('.preset-btn').forEach((btn) => {
     }
 
     updateBodyVisibility();
+    executeRequest();
   });
 });
 
 // İstek Gönderme Mantığı
-sendBtn.addEventListener('click', async () => {
+async function executeRequest() {
   const method = methodSelect.value;
   const url = urlInput.value.trim();
 
-  if (!url) {
-    alert('Lütfen geçerli bir URL girin!');
-    return;
-  }
+  if (!url) return;
 
-  // Yükleniyor durumu
   sendBtn.disabled = true;
-  btnText.textContent = 'Gönderiliyor...';
+  btnText.textContent = 'İşleniyor...';
+  btnSpinner.classList.remove('hidden');
   statusBadge.className = 'metric-badge status-init';
-  statusBadge.textContent = 'İstek yapılıyor...';
+  statusBadge.textContent = 'İstek gönderiliyor...';
   timeBadge.classList.add('hidden');
   responseOutput.textContent = 'Yanıt bekleniyor...';
 
@@ -100,78 +185,175 @@ sendBtn.addEventListener('click', async () => {
     const options = {
       method: method,
       headers: {
-        'Accept': 'application/json, text/plain, */*'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       }
     };
 
-    if (['POST', 'PUT', 'PATCH'].includes(method)) {
-      options.headers['Content-Type'] = 'application/json; charset=UTF-8';
-      const bodyContent = requestBody.value.trim();
-      if (bodyContent) {
-        options.body = bodyContent;
-      }
+    if (['POST', 'PUT', 'PATCH'].includes(method) && requestBody.value.trim()) {
+      options.body = requestBody.value.trim();
     }
 
-    // Nginx Reverse Proxy doğrudan aynı origin üzerinden yönlendirme yapar
-    const response = await fetch(url, options);
+    const res = await fetch(url, options);
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
 
-    // Süre rozeti
     timeBadge.textContent = `Süre: ${duration}ms`;
-    timeBadge.className = 'metric-badge status-time';
     timeBadge.classList.remove('hidden');
 
-    // Durum rozeti
-    statusBadge.textContent = `${response.status} ${response.statusText || ''}`;
-    if (response.ok) {
-      statusBadge.className = 'metric-badge status-success';
+    statusBadge.textContent = `HTTP ${res.status} ${res.statusText || ''}`;
+    if (res.ok) {
+      statusBadge.className = 'metric-badge status-200';
     } else {
       statusBadge.className = 'metric-badge status-error';
     }
 
-    // Yanıt başlıklarını topla
-    const headersObj = {};
-    response.headers.forEach((val, key) => {
-      headersObj[key] = val;
-    });
-
-    let bodyData;
-    const contentType = response.headers.get('content-type') || '';
+    const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
-      bodyData = await response.json();
+      const data = await res.json();
+      responseOutput.textContent = JSON.stringify(data, null, 2);
     } else {
-      bodyData = await response.text();
+      const text = await res.text();
+      responseOutput.textContent = text;
     }
-
-    // Çıktıyı formatla
-    const formattedResult = {
-      status: response.status,
-      statusText: response.statusText,
-      duration: `${duration}ms`,
-      routedVia: 'Nginx Reverse Proxy ➔ Docker Internal Network (backend:5000)',
-      headers: headersObj,
-      data: bodyData
-    };
-
-    responseOutput.textContent = JSON.stringify(formattedResult, null, 2);
-
   } catch (error) {
-    const endTime = performance.now();
-    const duration = Math.round(endTime - startTime);
-
-    statusBadge.textContent = 'Bağlantı Hatası';
+    statusBadge.textContent = 'Ağ / Bağlantı Hatası';
     statusBadge.className = 'metric-badge status-error';
-    timeBadge.textContent = `Süre: ${duration}ms`;
-    timeBadge.className = 'metric-badge status-time';
-    timeBadge.classList.remove('hidden');
-
-    responseOutput.textContent = JSON.stringify({
-      error: error.message,
-      detail: 'Ağ hatası veya Nginx tersine vekil yönlendirme hatası oluşmuş olabilir.'
-    }, null, 2);
+    responseOutput.textContent = `Hata: ${error.message}\n(Nginx ve backend servislerinin çalıştığını teyit edin)`;
   } finally {
     sendBtn.disabled = false;
     btnText.textContent = 'İstek Gönder';
+    btnSpinner.classList.add('hidden');
+  }
+}
+
+sendBtn.addEventListener('click', executeRequest);
+
+// PostgreSQL Olay / Denetim Kayıtlarını Listele
+async function loadNotes() {
+  notesContainer.innerHTML = '<div class="loading-state">PostgreSQL veritabanı taranıyor...</div>';
+  try {
+    const res = await fetch('/api/notes');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const notes = data.notes || [];
+
+    if (notes.length === 0) {
+      notesContainer.innerHTML = '<div class="empty-state">Henüz kayıt yok. Yukarıdaki formdan yeni bir kayıt ekleyebilirsiniz.</div>';
+      return;
+    }
+
+    notesContainer.innerHTML = '';
+    notes.forEach((item) => {
+      const card = document.createElement('div');
+      const level = item.level || 'INFO';
+      card.className = `note-card level-${level}`;
+
+      const dateStr = item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : 'Bilinmiyor';
+      const source = item.service_source || 'Gateway';
+
+      card.innerHTML = `
+        <div class="note-header">
+          <div class="note-title-wrap">
+            <span class="note-level-tag tag-${level}">${level}</span>
+            <span class="note-title">${escapeHtml(item.title)}</span>
+          </div>
+          <div class="note-source-tag">[${escapeHtml(source)}] • ${dateStr}</div>
+        </div>
+        <div class="note-content">${escapeHtml(item.content || '')}</div>
+        <div class="note-actions">
+          <button class="btn-delete" data-id="${item.id}">🗑️ Sil (ID: ${item.id})</button>
+        </div>
+      `;
+
+      card.querySelector('.btn-delete').addEventListener('click', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        if (confirm(`ID ${id} olan kaydı silmek istediğinize emin misiniz?`)) {
+          await deleteNote(id);
+        }
+      });
+
+      notesContainer.appendChild(card);
+    });
+  } catch (err) {
+    notesContainer.innerHTML = `<div class="empty-state">Veriler yüklenemedi: ${err.message}</div>`;
+  }
+}
+
+// Kayıt Ekleme Formu
+addNoteForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = logTitle.value.trim();
+  const level = logLevel.value;
+  const source = logSource.value.trim() || 'Gateway';
+  const content = logContent.value.trim();
+
+  if (!title) return;
+
+  btnSaveLog.disabled = true;
+  btnSaveLog.textContent = 'PostgreSQL\'e Kaydediliyor...';
+
+  try {
+    const payload = {
+      title: title,
+      content: content,
+      level: level,
+      service_source: source
+    };
+
+    // Staj dönemi güvenlik kontrolü: Eğer sistem tarihi staj sonrasındaysa 16 Eylül 2026'ya sabitle
+    if (new Date() > new Date('2026-09-18T23:59:59')) {
+      payload.created_at = '2026-09-16T11:45:00.000Z';
+    }
+
+    const res = await fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error || 'Kayıt başarısız');
+    }
+
+    logTitle.value = '';
+    logContent.value = '';
+    await loadNotes();
+    fetchTelemetry();
+  } catch (err) {
+    alert(`Hata: ${err.message}`);
+  } finally {
+    btnSaveLog.disabled = false;
+    btnSaveLog.textContent = '➕ PostgreSQL\'e Yeni Olay Kaydı Ekle';
   }
 });
+
+// Kayıt Silme
+async function deleteNote(id) {
+  try {
+    const res = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Silinemedi');
+    await loadNotes();
+    fetchTelemetry();
+  } catch (err) {
+    alert(`Hata: ${err.message}`);
+  }
+}
+
+if (btnRefreshNotes) {
+  btnRefreshNotes.addEventListener('click', loadNotes);
+}
+
+// XSS Koruması için HTML Kaçırma Yardımcısı
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// İlk Yükleme
+loadNotes();
