@@ -190,6 +190,26 @@ app.get('/api/services/status', async (req, res) => {
       port: 8082,
       status: taskPilotStatus,
       latency_ms: taskPilotLatencyMs
+    },
+    observability_grafana: {
+      name: 'Grafana Telemetry Hub (Dual Dashboards)',
+      port: 3000,
+      url: 'http://193.111.78.227:3000',
+      dashboards: {
+        gateway: 'http://193.111.78.227:3000/d/gateway-telemetry/cloud-native-gateway-and-distributed-telemetry',
+        taskpilot: 'http://193.111.78.227:3000/d/taskpilot-overview/taskpilot-observability-overview'
+      },
+      credentials: {
+        user: 'admin',
+        pass: 'bekir123'
+      },
+      status: 'ONLINE'
+    },
+    metrics_prometheus: {
+      name: 'Prometheus Time-Series Scraper',
+      port: 9090,
+      status: 'ONLINE',
+      scrape_target: 'taskpilot-api:8082/metrics'
     }
   });
 });

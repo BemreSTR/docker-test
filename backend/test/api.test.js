@@ -73,6 +73,8 @@ describe('🧪 Backend API & Telemetry Gateway Test Paketi (Quality Gate)', () =
     assert.ok(data.gateway && data.gateway.port === 80);
     assert.ok(data.backend && data.backend.port === 5000);
     assert.ok(data.microservice_taskpilot && data.microservice_taskpilot.port === 8082);
+    assert.ok(data.observability_grafana && data.observability_grafana.port === 3000);
+    assert.ok(data.metrics_prometheus && data.metrics_prometheus.port === 9090);
   });
 
   // 5. Test: Dayanıklılık & Gecikme Enjeksiyonu

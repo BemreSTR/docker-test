@@ -19,9 +19,13 @@
 
 Bu proje; Gebze Teknik Üniversitesi Bilgisayar Mühendisliği stajı kapsamında geliştirilmiş; **12-Factor App**, **Konteynır İzolasyonu**, **Tersine Vekil Mimarisi (Nginx)**, **DevSecOps (Shift-Left)** ve **Tam Otomatik Dağıtım (Zero-Touch CD)** prensiplerine göre yapılandırılmış kurumsal seviyede bir bulut bilişim ve dağıtık sistem platformudur.
 
-Sistem, iki ana modülden oluşmaktadır:
+Sistem, üç ana modülden oluşmaktadır:
 1. **Core Gateway & Telemetry Portalı (`Port 80`):** Nginx Edge Router, izole Node.js telemetri API'si ve PostgreSQL 16 veritabanı kümesi.
 2. **TaskPilot Engine (`Port 8082`):** Go (Golang) ile geliştirilmiş, JWT kimlik doğrulamalı ve veritabanı migrasyon servisine sahip kurumsal görev yönetim mikroservisi.
+3. **Grafana Observability Hub (`Port 3000`):** Prometheus ile toplanan metriklerin bağımsız 2 ayrı panoda görselleştirildiği kurumsal telemetri merkezi:
+   * **Dashboard 1 (Gateway):** `Cloud-Native Gateway & Distributed Telemetry` (Tersine vekil trafiği, Node.js heap belleği, PostgreSQL havuzu ve API p95 gecikmesi)
+   * **Dashboard 2 (TaskPilot):** `TaskPilot Observability Overview` (Go HTTP trafiği, goroutine sayıları, GC süreleri)
+   * *Giriş Bilgileri:* `admin` / `bekir123`
 
 Lokal geliştirme ortamından başlayarak, bulutta GitHub sanal makinelerinde 8 entegrasyon testi ile doğrulanan, Aqua Security Trivy ile taranan, Docker Hub üzerinde versiyonlanan ve bağımsız bir **Ubuntu VPS** sunucusunda sıfır insan müdahalesiyle canlıya alınan çok katmanlı (Multi-Tier) bir mimaridir.
 

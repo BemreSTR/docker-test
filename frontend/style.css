@@ -202,6 +202,12 @@ body {
   border: 1px solid rgba(0, 172, 215, 0.4);
 }
 
+.status-pill-grafana {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
 /* Main Container */
 .main-container {
   max-width: 1240px;
@@ -408,6 +414,253 @@ body {
 .badge-vol {
   background: rgba(59, 130, 246, 0.15);
   color: #60a5fa;
+}
+
+.badge-grafana {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+}
+
+.badge-prom {
+  background: rgba(225, 29, 72, 0.2);
+  color: #fb7185;
+}
+
+.topo-grafana {
+  border-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+.topo-grafana:hover {
+  border-color: rgba(249, 115, 22, 0.6) !important;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);
+}
+
+/* Grafana Showcase Banner */
+.grafana-banner {
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.7), rgba(15, 23, 42, 0.9));
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 12px;
+  padding: 1.4rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.grafana-banner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.grafana-pill {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.15);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.grafana-ping-badge {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: #34d399;
+  font-weight: 700;
+}
+
+.grafana-banner-body {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.grafana-desc {
+  flex: 3;
+  min-width: 280px;
+}
+
+.grafana-desc h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.4rem;
+}
+
+.grafana-desc p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Live Telemetry Chart Section */
+.chart-section {
+  margin-top: 1.25rem;
+  background: rgba(11, 18, 33, 0.7);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.1rem;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chart-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-dot {
+  width: 7px;
+  height: 7px;
+  background-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+.chart-title {
+  font-size: 0.82rem;
+  color: #ffffff;
+}
+
+.pulse-btn {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+}
+
+.pulse-btn:hover {
+  background: rgba(56, 189, 248, 0.3) !important;
+}
+
+.canvas-box {
+  width: 100%;
+  overflow-x: auto;
+  background: #030712;
+  border-radius: 8px;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.canvas-box canvas {
+  width: 100%;
+  display: block;
+}
+
+/* Grafana Dual Cards */
+.cred-inline-box {
+  margin-top: 0.8rem;
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.cred-inline-box strong {
+  color: #fb923c;
+  font-family: var(--font-mono);
+}
+
+.grafana-dual-cards {
+  display: flex;
+  gap: 1rem;
+  flex: 3;
+  min-width: 300px;
+  flex-wrap: wrap;
+}
+
+.dashboard-card {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(11, 15, 25, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: all 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(249, 115, 22, 0.5);
+}
+
+.dash-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dash-tag {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+}
+
+.dash-tag-go {
+  color: #a855f7;
+}
+
+.dashboard-card h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dashboard-card p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  flex: 1;
+}
+
+.btn-dash {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-dash-gateway {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  color: #ffffff;
+}
+
+.btn-dash-gateway:hover {
+  background: #0284c7;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+}
+
+.btn-dash-go {
+  background: linear-gradient(135deg, #9333ea, #a855f7);
+  color: #ffffff;
+}
+
+.btn-dash-go:hover {
+  background: #7e22ce;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
 }
 
 .topo-arrow {

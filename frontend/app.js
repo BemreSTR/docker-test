@@ -3,6 +3,12 @@
 // DOM Referansları
 const runtimeLabel = document.getElementById('runtime-label');
 const taskpilotLink = document.getElementById('taskpilot-link');
+const grafanaLink = document.getElementById('grafana-link');
+const linkGatewayDash = document.getElementById('link-gateway-dash');
+const linkTaskpilotDash = document.getElementById('link-taskpilot-dash');
+const pingGrafana = document.getElementById('ping-grafana');
+const btnSimulateTraffic = document.getElementById('btn-simulate-traffic');
+const chartCanvas = document.getElementById('live-telemetry-chart');
 
 // Topoloji & Telemetri Elemanları
 const pingNginx = document.getElementById('ping-nginx');
@@ -42,8 +48,20 @@ const btnRefreshNotes = document.getElementById('btn-refresh-notes');
 
 // Dinamik Host ve Link Yapılandırması
 const currentHost = window.location.hostname || '193.111.78.227';
+const gatewayDashUrl = `http://${currentHost}:3000/d/gateway-telemetry/cloud-native-gateway-and-distributed-telemetry`;
+const taskpilotDashUrl = `http://${currentHost}:3000/d/taskpilot-overview/taskpilot-observability-overview`;
+
 if (taskpilotLink) {
   taskpilotLink.href = `http://${currentHost}:8082`;
+}
+if (grafanaLink) {
+  grafanaLink.href = `http://${currentHost}:3000`;
+}
+if (linkGatewayDash) {
+  linkGatewayDash.href = gatewayDashUrl;
+}
+if (linkTaskpilotDash) {
+  linkTaskpilotDash.href = taskpilotDashUrl;
 }
 
 if (runtimeLabel) {
@@ -61,6 +79,81 @@ function formatUptime(seconds) {
   return `${m} dk ${s} sn`;
 }
 
+// Canlı Çizgi Grafiği Mantığı (HTML5 Canvas)
+const chartHistory = [18, 22, 19, 25, 20, 24, 21, 19, 23, 20, 22, 19];
+
+function drawTelemetryChart() {
+  if (!chartCanvas) return;
+  const ctx = chartCanvas.getContext('2d');
+  const w = chartCanvas.width;
+  const h = chartCanvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Kılavuz Çizgileri
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let y = 20; y < h; y += 30) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  if (chartHistory.length < 2) return;
+
+  const maxVal = Math.max(...chartHistory, 60);
+  const minVal = 0;
+  const stepX = w / (chartHistory.length - 1);
+
+  // Alan Doldurma (Gradient Fill)
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+  grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+  ctx.beginPath();
+  chartHistory.forEach((val, i) => {
+    const x = i * stepX;
+    const y = h - ((val - minVal) / (maxVal - minVal)) * (h - 25) - 10;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Çizgi Çizimi
+  ctx.beginPath();
+  chartHistory.forEach((val, i) => {
+    const x = i * stepX;
+    const y = h - ((val - minVal) / (maxVal - minVal)) * (h - 25) - 10;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Noktalar ve Değer Etiketleri
+  chartHistory.forEach((val, i) => {
+    const x = i * stepX;
+    const y = h - ((val - minVal) / (maxVal - minVal)) * (h - 25) - 10;
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = i === chartHistory.length - 1 ? '#34d399' : '#38bdf8';
+    ctx.fill();
+
+    if (i === chartHistory.length - 1) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '10px JetBrains Mono, monospace';
+      ctx.fillText(`${val}ms`, x - 15, y - 8);
+    }
+  });
+}
+
 // Canlı Telemetri ve Topoloji Taraması
 async function fetchTelemetry() {
   const startPing = performance.now();
@@ -75,6 +168,11 @@ async function fetchTelemetry() {
       metricSlaStatus.style.color = '#34d399';
     }
 
+    // Grafiğe ekle
+    chartHistory.push(elapsed);
+    if (chartHistory.length > 20) chartHistory.shift();
+    drawTelemetryChart();
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
@@ -86,6 +184,10 @@ async function fetchTelemetry() {
       const dbOnline = data.database_pool?.status === 'CONNECTED';
       pingDb.textContent = dbOnline ? 'DB: Connected' : 'DB: Reconnecting';
       pingDb.style.color = dbOnline ? '#34d399' : '#f59e0b';
+    }
+    if (pingGrafana) {
+      pingGrafana.textContent = 'Grafana :3000';
+      pingGrafana.style.color = '#fb923c';
     }
 
     // Metrik Kartları Güncellemeleri
@@ -125,6 +227,33 @@ if (btnRefreshTopology) {
     fetchTelemetry().finally(() => {
       setTimeout(() => { btnRefreshTopology.textContent = '🔄 Topolojiyi Tara'; }, 500);
     });
+  });
+}
+
+// ⚡ Anlık Trafik Üretme (Simülasyon)
+if (btnSimulateTraffic) {
+  btnSimulateTraffic.addEventListener('click', async () => {
+    btnSimulateTraffic.disabled = true;
+    btnSimulateTraffic.textContent = '⚡ 10 Paralel İstek Gönderiliyor...';
+
+    const promises = Array.from({ length: 10 }, async () => {
+      const s = performance.now();
+      await fetch('/api/telemetry');
+      return Math.round(performance.now() - s);
+    });
+
+    const latencies = await Promise.all(promises);
+    latencies.forEach(lat => {
+      chartHistory.push(lat);
+      if (chartHistory.length > 20) chartHistory.shift();
+    });
+    drawTelemetryChart();
+
+    btnSimulateTraffic.textContent = '✅ Trafik Üretildi!';
+    setTimeout(() => {
+      btnSimulateTraffic.disabled = false;
+      btnSimulateTraffic.textContent = '⚡ Trafik Üret (10 Paralel İstek)';
+    }, 1500);
   });
 }
 

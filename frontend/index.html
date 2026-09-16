@@ -50,6 +50,14 @@
         </div>
         <span class="status-pill status-pill-go">Uygulamaya Git ↗</span>
       </a>
+      <a href="http://193.111.78.227:3000" target="_blank" class="platform-tab platform-link" id="grafana-link">
+        <span class="plat-icon">📊</span>
+        <div>
+          <span class="plat-title">Platform 3: Grafana APM Hub (:3000)</span>
+          <span class="plat-sub">Giriş: admin / bekir123 • 2 Ayrı Dashboard</span>
+        </div>
+        <span class="status-pill status-pill-grafana">Panelleri Aç ↗</span>
+      </a>
     </div>
   </nav>
 
@@ -120,6 +128,24 @@
             </div>
           </div>
         </div>
+
+        <div class="topo-arrow">➔<span class="arrow-label">/metrics (Scrape)</span></div>
+
+        <!-- Node 4: Prometheus & Grafana Observability -->
+        <div class="topo-node topo-grafana">
+          <div class="node-header">
+            <span class="node-type">OBSERVABILITY</span>
+            <span class="node-ping" id="ping-grafana">Grafana :3000</span>
+          </div>
+          <div class="node-body">
+            <h3>Grafana & Prometheus</h3>
+            <p class="node-desc">Konteynır: <code>taskpilot-grafana</code></p>
+            <div class="node-meta">
+              <span class="badge badge-grafana">admin / bekir123 🔑</span>
+              <span class="badge badge-prom">TSDB TaskPilot Scraper</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -159,6 +185,61 @@
           <span class="metric-label">Son API İstek Gecikmesi</span>
           <span class="metric-val" id="metric-latency">-- ms</span>
           <span class="metric-sub" id="metric-sla-status">SLA: Sağlıklı</span>
+        </div>
+      </div>
+
+      <!-- Canlı API Gecikme & Telemetri Çizgi Grafiği -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <div class="chart-title-wrap">
+            <span class="chart-dot"></span>
+            <strong class="chart-title">Canlı Gecikme (Latency) & Yük Akış Grafiği (Real-Time Telemetry Stream)</strong>
+          </div>
+          <button id="btn-simulate-traffic" class="mini-btn pulse-btn">⚡ Trafik Üret (10 Paralel İstek)</button>
+        </div>
+        <div class="canvas-box">
+          <canvas id="live-telemetry-chart" width="950" height="110"></canvas>
+        </div>
+      </div>
+
+      <!-- Grafana & Prometheus Entegrasyon Kartı (Çift Dashboard) -->
+      <div class="grafana-banner">
+        <div class="grafana-banner-header">
+          <span class="grafana-pill">📊 GRAFANA & PROMETHEUS OBSERVABILITY HUB</span>
+          <span class="grafana-ping-badge">Port 3000 • 2 Ayrı Dashboard Aktif</span>
+        </div>
+        <div class="grafana-banner-body">
+          <div class="grafana-desc">
+            <h3>İki Ayrı Mühendislik Panosu: Gateway & TaskPilot</h3>
+            <p>16 Eylül staj günlüğü kapsamında; hem bu projenin (Core Gateway & Reverse Proxy) telemetrisi hem de 2. projenin (TaskPilot Go Engine) metrikleri Prometheus üzerinden toplanıp Grafana'da iki bağımsız gösterge paneli olarak görselleştirilmektedir.</p>
+            <div class="cred-inline-box">
+              <span>Giriş Bilgileri: Kullanıcı: <strong>admin</strong> | Şifre: <strong>bekir123</strong></span>
+            </div>
+          </div>
+          <div class="grafana-dual-cards">
+            <!-- Pano 1: Gateway -->
+            <div class="dashboard-card">
+              <div class="dash-card-header">
+                <span class="dash-tag">BU PROJE (PORT 80)</span>
+                <h4>Gateway & Nginx Telemetry</h4>
+              </div>
+              <p>Tersine vekil, Node.js heap belleği, PostgreSQL havuzu ve API p95 gecikme grafikleri.</p>
+              <a href="http://193.111.78.227:3000/d/gateway-telemetry/cloud-native-gateway-and-distributed-telemetry" target="_blank" class="btn btn-dash btn-dash-gateway" id="link-gateway-dash">
+                📊 Gateway Panosunu Aç ↗
+              </a>
+            </div>
+            <!-- Pano 2: TaskPilot -->
+            <div class="dashboard-card">
+              <div class="dash-card-header">
+                <span class="dash-tag dash-tag-go">TASKPILOT (PORT 8082)</span>
+                <h4>TaskPilot Go Observability</h4>
+              </div>
+              <p>Go HTTP trafiği, goroutine sayıları, GC süreleri ve sprint görev operasyonları.</p>
+              <a href="http://193.111.78.227:3000/d/taskpilot-overview/taskpilot-observability-overview" target="_blank" class="btn btn-dash btn-dash-go" id="link-taskpilot-dash">
+                🚀 TaskPilot Panosunu Aç ↗
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
